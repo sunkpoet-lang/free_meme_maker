@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Meme Maker</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link
+    href="https://fonts.googleapis.com/css2?family=Anton&family=Bebas+Neue&family=Montserrat:wght@400;700&family=Oswald:wght@400;700&family=Roboto:wght@400;700&display=swap"
+    rel="stylesheet"
+  />
+  <link rel="stylesheet" href="css/style.css" />
+</head>
+<body>
+
+  <header class="app-header">
+    <div class="app-header-titles">
+      <h1 class="app-title">MEME MAKER</h1>
+      <span class="app-subtitle">Editor completo</span>
+    </div>
+    <div class="app-toolbar">
+      <button type="button" id="btn-undo" title="Deshacer (Ctrl+Z)">↺ Deshacer</button>
+      <button type="button" id="btn-redo" title="Rehacer (Ctrl+Shift+Z)">↻ Rehacer</button>
+      <button type="button" id="btn-duplicate" title="Duplicar (Ctrl+C, Ctrl+V)">⧉ Duplicar</button>
+      <button type="button" id="btn-delete" title="Eliminar (Supr)">🗑️ Eliminar</button>
+    </div>
+  </header>
+
+  <div class="app-layout">
+
+    <!-- PANEL IZQUIERDO: herramientas de creación -->
+    <aside class="panel panel-left">
+
+      <section class="tool-section">
+        <h2 class="panel-title">Imagen</h2>
+        <button type="button" id="btn-upload-image" class="primary-btn">Subir imagen</button>
+        <input type="file" id="file-input" accept="image/*" hidden />
+        <p class="hint">También puedes arrastrar una imagen al lienzo o pegarla con Ctrl+V.</p>
+      </section>
+
+      <section class="tool-section">
+        <h2 class="panel-title">Texto</h2>
+        <button type="button" id="btn-add-text" class="primary-btn">+ Agregar texto</button>
+      </section>
+
+      <section class="tool-section">
+        <h2 class="panel-title">Stickers</h2>
+        <div class="sticker-grid" id="sticker-grid"></div>
+      </section>
+
+      <section class="tool-section">
+        <h2 class="panel-title">Formas</h2>
+        <div class="shape-grid" id="shape-grid">
+          <button type="button" data-shape="rect" title="Rectángulo">▭</button>
+          <button type="button" data-shape="circle" title="Círculo">⬤</button>
+          <button type="button" data-shape="line" title="Línea">╱</button>
+          <button type="button" data-shape="arrow" title="Flecha">➤</button>
+        </div>
+      </section>
+
+      <section class="tool-section">
+        <h2 class="panel-title">Plantillas</h2>
+        <div class="template-grid" id="template-grid"></div>
+      </section>
+
+      <section class="tool-section">
+        <h2 class="panel-title">Fondo</h2>
+        <label class="field-row">
+          <span>Color de fondo</span>
+          <input type="color" id="background-color-input" value="#000000" />
+        </label>
+      </section>
+
+    </aside>
+
+    <!-- ÁREA CENTRAL: el canvas donde se construye el meme -->
+    <main class="canvas-area">
+      <div class="canvas-toolbar">
+        <span id="canvas-size-label">800 × 800 px</span>
+      </div>
+      <div class="canvas-wrapper" id="canvas-wrapper">
+        <canvas id="meme-canvas" width="800" height="800"></canvas>
+      </div>
+    </main>
+
+    <!-- PANEL DERECHO: lienzo, capas y propiedades -->
+    <aside class="panel panel-right">
+
+      <section class="tool-section">
+        <h2 class="panel-title">Lienzo</h2>
+        <label class="field-row">
+          <span>Tamaño</span>
+          <select id="canvas-size-select">
+            <option value="800x800">800 × 800 (actual)</option>
+            <option value="1080x1080">1080 × 1080 · cuadrado</option>
+            <option value="1080x1350">1080 × 1350 · retrato</option>
+            <option value="1080x1920">1080 × 1920 · historia</option>
+            <option value="1200x675">1200 × 675 · horizontal</option>
+            <option value="1280x720">1280 × 720 · HD</option>
+            <option value="custom">Personalizado…</option>
+          </select>
+        </label>
+        <div class="field-row field-row--inline" id="custom-size-row" hidden>
+          <input type="number" id="custom-width" min="100" max="4000" value="800" />
+          <span>×</span>
+          <input type="number" id="custom-height" min="100" max="4000" value="800" />
+          <button type="button" id="btn-apply-size">Aplicar</button>
+        </div>
+      </section>
+
+      <section class="tool-section">
+        <h2 class="panel-title">Capas</h2>
+        <div id="layers-list" class="layers-list"></div>
+      </section>
+
+      <section class="tool-section">
+        <h2 class="panel-title">Propiedades</h2>
+        <div id="properties-container"></div>
+      </section>
+
+      <section class="tool-section">
+        <h2 class="panel-title">Exportar</h2>
+        <label class="field-row">
+          <span>Formato</span>
+          <select id="export-format">
+            <option value="png">PNG</option>
+            <option value="jpeg">JPG</option>
+            <option value="webp">WEBP</option>
+          </select>
+        </label>
+        <label class="field-row" id="quality-row">
+          <span>Calidad</span>
+          <input type="range" id="export-quality" min="0.5" max="1" step="0.05" value="0.92" />
+        </label>
+        <button type="button" id="btn-export" class="primary-btn primary-btn--export">⬇️ Descargar meme</button>
+      </section>
+
+    </aside>
+
+  </div>
+
+  <script src="js/state.js"></script>
+  <script src="js/elements.js"></script>
+  <script src="js/render.js"></script>
+  <script src="js/interactions.js"></script>
+  <script src="js/panels.js"></script>
+  <script src="js/export.js"></script>
+  <script src="js/app.js"></script>
+</body>
+</html>
