@@ -28,7 +28,13 @@ const TEXT_STYLE_PRESETS = {
   "Texto limpio": { color: "#ffffff", strokeColor: "#000000", strokeWidth: 0, shadowBlur: 0, shadowColor: "#000000" },
 };
 
-const STICKER_EMOJIS = ["😂", "😭", "🔥", "💀", "👍", "👎", "😱", "🤔", "💯", "❤️", "🎉", "👀"];
+const STICKER_EMOJIS = [
+  "😂", "😭", "🔥", "💀", "👍", "👎", "😱", "🤔", "💯", "❤️", "🎉", "👀",
+  "😩", "🥵", "🥶", "😤", "😡", "🤬", "🥺", "😳", "🙏", "💅", "🫡", "🗿",
+  "🤡", "🐸", "💩", "🫠", "🤯", "😴", "🙄", "😏", "😈", "👻", "💦", "✨",
+  "💔", "🖕", "✌️", "👌", "🤙", "🫰", "💪", "🧠", "😬", "🤢", "🤮", "🙌",
+  "🤦", "🤷", "😅", "🍆", "🍑", "⚠️",
+];
 
 // Plantillas de ejemplo. En vez de depender de imágenes externas
 // (que requerirían internet y podrían tener derechos de autor),
