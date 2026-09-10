@@ -13,6 +13,21 @@
     rel="stylesheet"
   />
   <link rel="stylesheet" href="css/style.css" />
+  <link rel="stylesheet" href="css/themes.css" />
+  <script>
+    // Aplica el tema guardado ANTES de pintar la página, para que no se
+    // vea un parpadeo del tema naranja antes de cambiar al elegido.
+    (function () {
+      try {
+        var saved = localStorage.getItem("memeStudioTheme");
+        if (saved === "dark" || saved === "win95") {
+          document.documentElement.setAttribute("data-theme", saved);
+        }
+      } catch (err) {
+        /* localStorage no disponible (modo privado, etc.): se queda en el tema naranja */
+      }
+    })();
+  </script>
 </head>
 <body>
 
@@ -29,6 +44,11 @@
     <div class="meme-counter" id="meme-counter" title="Memes descargados por todos los que usan Meme Studio">
       <span class="meme-counter-icon" aria-hidden="true">🔥</span>
       <span class="meme-counter-text"><span id="meme-counter-value">0</span> memes creados</span>
+    </div>
+    <div class="theme-switcher" id="theme-switcher" role="group" aria-label="Elegir tema">
+      <button type="button" class="theme-btn" data-theme="naranja" title="Tema Naranja (clásico)" aria-label="Tema Naranja">🔥</button>
+      <button type="button" class="theme-btn" data-theme="dark" title="Tema Oscuro" aria-label="Tema Oscuro">🌙</button>
+      <button type="button" class="theme-btn" data-theme="win95" title="Tema Windows 95" aria-label="Tema Windows 95">🪟</button>
     </div>
     <div class="app-toolbar">
       <button type="button" id="btn-undo" title="Deshacer (Ctrl+Z)">↩ Deshacer</button>
@@ -261,6 +281,7 @@
     </div>
   </div>
 
+  <script src="js/theme.js"></script>
   <script src="js/state.js"></script>
   <script src="js/counter.js"></script>
   <script src="js/elements.js"></script>

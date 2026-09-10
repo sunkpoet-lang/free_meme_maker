@@ -1,0 +1,242 @@
+/* =========================================================
+   MEME MAKER — themes.css
+   ---------------------------------------------------------
+   Temas alternativos al tema por defecto ("Naranja", definido
+   en style.css). Cada tema redefine los MISMOS tokens (variables
+   CSS) que ya usa style.css, así que no hace falta repetir cada
+   regla: alcanza con cambiar los valores aquí, bajo un atributo
+   data-theme en <html> (ver js/theme.js).
+
+   El único caso que sí necesita reglas propias es Windows 95,
+   porque cambia la FORMA de los bordes/sombras (biseles 3D en vez
+   de degradados con resplandor neón), no solo el color.
+   ========================================================= */
+
+/* ---------- Tema oscuro ---------- */
+
+html[data-theme="dark"] {
+  --bg-app: #121214;
+  --bg-panel: #1a1a1d;
+  --bg-canvas-area: #101012;
+  --bg-input: #232327;
+  --bg-chip: #1f1f23;
+  --border-color: #3a3a40;
+  --border-strong: #4d4d55;
+  --text-primary: #eef0f3;
+  --text-secondary: #9a9aa4;
+  --accent: #4da3ff;
+  --accent-hover: #7cc0ff;
+  --accent-ink: #06131f;
+  --accent-soft: rgba(77, 163, 255, 0.16);
+  --ember: #4da3ff;
+  --danger: #ff5c5c;
+  --radius: 14px;
+  --radius-sm: 10px;
+  --radius-pill: 999px;
+  --font-ui: "Montserrat", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif;
+  --font-display: "Bebas Neue", "Anton", Impact, sans-serif;
+  --glow: 0 0 10px rgba(77, 163, 255, 0.22);
+
+  --body-bg: linear-gradient(180deg, #101012 0%, #08080a 100%);
+  --border-chip: #3a3a40;
+  --border-panel-strong: #2c2c31;
+  --header-line: #2c2c31;
+  --header-bg: linear-gradient(180deg, #1a1a1d 0%, #101012 100%);
+  --header-shadow: 0 1px 0 var(--header-line);
+  --brand-logo-glow: drop-shadow(0 0 8px rgba(77, 163, 255, 0.35));
+  --title-text-shadow: 2px 3px 0 rgba(0, 0, 0, 0.5);
+  --heading-glow: none;
+  --toolbar-bg: linear-gradient(180deg, #1e1e22 0%, #141416 100%);
+  --toolbar-border: #2c2c31;
+  --counter-bg: linear-gradient(180deg, #1e1e22 0%, #141416 100%);
+  --counter-border: #2c2c31;
+  --counter-icon-glow: none;
+  --counter-text-shadow: none;
+  --toolbar-btn-bg: linear-gradient(180deg, #2b2b30 0%, #1c1c1f 100%);
+  --toolbar-btn-shadow: 0 2px 0 rgba(0, 0, 0, 0.6);
+  --toolbar-btn-shadow-active: 0 1px 0 rgba(0, 0, 0, 0.6);
+  --danger-btn-bg: linear-gradient(180deg, #7a2323 0%, #4a1212 100%);
+  --panel-bg: linear-gradient(180deg, #1c1c1f 0%, #141416 100%);
+  --panel-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.04), 0 8px 24px rgba(0, 0, 0, 0.45);
+  --panel-title-color: #d8d8de;
+  --quicknav-btn-bg: linear-gradient(180deg, #232327 0%, #19191c 100%);
+  --quicknav-btn-color: #c8c8d0;
+  --btn-primary-bg: linear-gradient(180deg, #4da3ff 0%, #2f7fe0 100%);
+  --btn-primary-bg-hover: linear-gradient(180deg, #7cc0ff 0%, #4da3ff 100%);
+  --btn-primary-color: var(--accent-ink);
+  --btn-primary-shadow: 0 3px 0 rgba(0, 0, 0, 0.6), 0 0 10px rgba(77, 163, 255, 0.25);
+  --btn-primary-shadow-active: 0 1px 0 rgba(0, 0, 0, 0.6);
+  --btn-secondary-bg: #232327;
+  --quick-btn-shadow: 0 3px 0 rgba(0, 0, 0, 0.6);
+  --export-quick-bg: linear-gradient(180deg, #34d399 0%, #059669 100%);
+  --export-quick-bg-hover: linear-gradient(180deg, #6ee7b7 0%, #10b981 100%);
+  --export-quick-color: #04140d;
+  --export-quick-shadow: 0 3px 0 rgba(0, 0, 0, 0.6), 0 0 12px rgba(52, 211, 153, 0.3);
+  --canvas-toolbar-shadow: none;
+  --canvas-stage-bg: linear-gradient(180deg, #202024 0%, #141416 100%);
+  --canvas-stage-shadow: inset 0 0 0 2px #3a3a40, 0 16px 40px rgba(0, 0, 0, 0.55);
+  --canvas-empty-logo-glow: drop-shadow(0 0 8px rgba(77, 163, 255, 0.3));
+  --canvas-empty-title-color: #f0f0f2;
+  --canvas-empty-title-shadow: none;
+  --canvas-empty-sub-color: #9a9aa4;
+  --drag-over-shadow: inset 0 0 0 3px var(--accent), 0 0 26px rgba(77, 163, 255, 0.4);
+  --sticker-editor-box-shadow: 0 16px 40px rgba(0, 0, 0, 0.55);
+  --overlay-scrim: rgba(6, 6, 8, 0.88);
+  --busy-scrim: rgba(6, 6, 8, 0.82);
+}
+
+/* ---------- Tema Windows 95 ---------- */
+
+html[data-theme="win95"] {
+  --bg-app: #008080;
+  --bg-panel: #c0c0c0;
+  --bg-canvas-area: #008080;
+  --bg-input: #ffffff;
+  --bg-chip: #c0c0c0;
+  --border-color: #808080;
+  --border-strong: #000000;
+  --text-primary: #000000;
+  --text-secondary: #2a2a2a;
+  --accent: #000080;
+  --accent-hover: #1084d0;
+  --accent-ink: #ffffff;
+  --accent-soft: #d4d0c8;
+  --ember: #000080;
+  --danger: #c00000;
+  --radius: 0px;
+  --radius-sm: 0px;
+  --radius-pill: 0px;
+  --font-ui: "Tahoma", "MS Sans Serif", Arial, sans-serif;
+  --font-display: "Tahoma", "MS Sans Serif", Arial, sans-serif;
+  --glow: none;
+
+  --body-bg: #008080;
+  --border-chip: #808080;
+  --border-panel-strong: #808080;
+  --header-line: #000000;
+  --header-bg: linear-gradient(90deg, #000080 0%, #1084d0 100%);
+  --header-shadow: none;
+  --brand-logo-glow: none;
+  --title-text-shadow: none;
+  --heading-glow: none;
+  --toolbar-bg: #c0c0c0;
+  --toolbar-border: #808080;
+  --counter-bg: #c0c0c0;
+  --counter-border: #808080;
+  --counter-icon-glow: none;
+  --counter-text-shadow: none;
+  --toolbar-btn-bg: #c0c0c0;
+  --toolbar-btn-shadow: var(--bevel-out);
+  --toolbar-btn-shadow-active: var(--bevel-in);
+  --danger-btn-bg: #c0c0c0;
+  --panel-bg: #c0c0c0;
+  --panel-shadow: var(--bevel-out);
+  --panel-title-color: #000080;
+  --quicknav-btn-bg: #c0c0c0;
+  --quicknav-btn-color: #000000;
+  --btn-primary-bg: #c0c0c0;
+  --btn-primary-bg-hover: #d4d0c8;
+  --btn-primary-color: #000000;
+  --btn-primary-shadow: var(--bevel-out);
+  --btn-primary-shadow-active: var(--bevel-in);
+  --btn-secondary-bg: #c0c0c0;
+  --quick-btn-shadow: var(--bevel-out);
+  --export-quick-bg: #c0c0c0;
+  --export-quick-bg-hover: #d4d0c8;
+  --export-quick-color: #006600;
+  --export-quick-shadow: var(--bevel-out);
+  --canvas-toolbar-shadow: none;
+  --canvas-stage-bg: #c0c0c0;
+  --canvas-stage-shadow: var(--bevel-out);
+  --canvas-empty-logo-glow: none;
+  /* Este texto se dibuja SIEMPRE sobre el lienzo negro (#meme-canvas es
+     negro en los 3 temas), así que se queda claro aunque el resto de
+     Windows 95 use texto oscuro sobre gris. */
+  --canvas-empty-title-color: #ffffff;
+  --canvas-empty-title-shadow: none;
+  --canvas-empty-sub-color: #c8c8c8;
+  --drag-over-shadow: inset 0 0 0 2px #000080;
+  --sticker-editor-box-shadow: var(--bevel-out);
+  --overlay-scrim: rgba(0, 0, 0, 0.5);
+  --busy-scrim: rgba(0, 0, 0, 0.5);
+
+  /* Biseles 3D clásicos de Windows 95, armados con sombras en capas
+     (no hace falta cambiar el "border" real de cada elemento). */
+  --bevel-out: inset -1px -1px 0 #0a0a0a, inset 1px 1px 0 #dfdfdf, inset -2px -2px 0 #808080, inset 2px 2px 0 #ffffff;
+  --bevel-in: inset 1px 1px 0 #0a0a0a, inset -1px -1px 0 #dfdfdf, inset 2px 2px 0 #808080, inset -2px -2px 0 #ffffff;
+}
+
+/* Windows 95 no tiene esquinas redondeadas en NADA -a diferencia de los
+   otros dos temas, que solo cambian colores, este cambia la forma. El
+   spinner de "procesando" es la única excepción: sigue siendo un círculo
+   para que se note que está girando. */
+html[data-theme="win95"] * {
+  border-radius: 0 !important;
+}
+
+html[data-theme="win95"] .busy-spinner {
+  border-radius: 50% !important;
+}
+
+/* Los botones de Windows 95 no se "hunden" moviéndose (translateY);
+   invierten el bisel para verse presionados. */
+html[data-theme="win95"] .primary-btn:active,
+html[data-theme="win95"] .app-toolbar button:active {
+  transform: none;
+}
+
+/* El título y la barra de herramientas "de capa" usan una tipografía y
+   trazo más gruesos y sin resplandor, más parecidos a una barra de
+   título clásica. */
+html[data-theme="win95"] .app-title {
+  font-weight: 700;
+  letter-spacing: 0;
+  color: #ffffff;
+}
+
+html[data-theme="win95"] .app-subtitle {
+  color: #d8d8f0;
+}
+
+html[data-theme="win95"] .meme-counter-text {
+  color: #000000;
+}
+
+/* La barra de herramientas y el contador también reciben el bisel
+   "hundido" clásico de los paneles de estado de Windows 95. */
+html[data-theme="win95"] .app-toolbar,
+html[data-theme="win95"] .meme-counter {
+  box-shadow: var(--bevel-in);
+}
+
+/* Los campos de texto/número/select llevan el bisel "hundido" propio de
+   los controles de formulario de Windows 95, en vez de un simple borde. */
+html[data-theme="win95"] .gif-url-row input[type="text"],
+html[data-theme="win95"] .field-row input[type="text"],
+html[data-theme="win95"] .field-row input[type="number"],
+html[data-theme="win95"] .field-row select,
+html[data-theme="win95"] .field-row textarea,
+html[data-theme="win95"] #templates-search {
+  border: 1px solid #808080;
+  box-shadow: inset 1px 1px 0 #000000, inset -1px -1px 0 #ffffff;
+}
+
+/* Scrollbars clásicas (solo navegadores basados en Chromium/WebKit). */
+html[data-theme="win95"] ::-webkit-scrollbar {
+  width: 16px;
+  height: 16px;
+}
+
+html[data-theme="win95"] ::-webkit-scrollbar-track {
+  background: #dfdfdf;
+}
+
+html[data-theme="win95"] ::-webkit-scrollbar-thumb {
+  background: #c0c0c0;
+  border: 1px solid;
+  border-color: #ffffff #0a0a0a #0a0a0a #ffffff;
+}
+
+html[data-theme="win95"] ::-webkit-scrollbar-corner {
+  background: #dfdfdf;
+}

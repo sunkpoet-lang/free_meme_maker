@@ -9,6 +9,8 @@
    ========================================================= */
 
 document.addEventListener("DOMContentLoaded", () => {
+  ThemeManager.setup();
+
   App.canvas = document.getElementById("meme-canvas");
   App.ctx = App.canvas.getContext("2d");
 
