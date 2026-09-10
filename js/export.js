@@ -23,6 +23,9 @@ const Exporter = {
     formatSelect.addEventListener("change", syncQualityVisibility);
 
     document.getElementById("btn-export").addEventListener("click", Exporter.exportImage);
+    // Botón grande debajo del lienzo, más accesible que ir hasta el panel derecho
+    // (usa el mismo formato/calidad elegidos en el panel de "Exportar").
+    document.getElementById("btn-quick-export").addEventListener("click", Exporter.exportImage);
     Exporter.updateGifOptionVisibility();
   },
 
