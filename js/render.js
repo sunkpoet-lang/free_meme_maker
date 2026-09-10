@@ -90,9 +90,19 @@ const Render = {
     ctx.drawImage(img, -el.width / 2, -el.height / 2, el.width, el.height);
   },
 
+  /**
+   * Los memes clásicos se ven en MAYÚSCULAS, así que lo que se
+   * escribe se dibuja siempre así en el lienzo (y por lo tanto
+   * también al exportar) -sin importar cómo se haya tecleado en el
+   * cuadro de "Contenido" del panel de propiedades-.
+   */
+  displayContent(el) {
+    return String(el.content || "").toUpperCase();
+  },
+
   drawTextElement(el) {
     const { ctx } = App;
-    const lines = String(el.content || "").split("\n");
+    const lines = Render.displayContent(el).split("\n");
     const weight = el.bold ? "700" : "400";
     const style = el.italic ? "italic" : "normal";
     ctx.font = `${style} ${weight} ${el.fontSize}px "${el.fontFamily}"`;
@@ -199,7 +209,7 @@ const Render = {
     const weight = el.bold ? "700" : "400";
     const style = el.italic ? "italic" : "normal";
     ctx.font = `${style} ${weight} ${el.fontSize}px "${el.fontFamily}"`;
-    const lines = String(el.content || "").split("\n");
+    const lines = Render.displayContent(el).split("\n");
     let maxWidth = 0;
     for (const line of lines) {
       const w = ctx.measureText(line).width;

@@ -120,13 +120,16 @@ const Panels = {
   /* ---------- Herramienta: texto ---------- */
 
   setupTextTool() {
-    document.getElementById("btn-add-text").addEventListener("click", () => {
+    const addText = () => {
       Elements.addText({});
       Render.draw();
       Panels.refreshLayers();
       Panels.refreshProperties();
       History.commit();
-    });
+    };
+    document.getElementById("btn-add-text").addEventListener("click", addText);
+    // Botón grande arriba del lienzo, más accesible que ir hasta el panel izquierdo.
+    document.getElementById("btn-quick-add-text").addEventListener("click", addText);
   },
 
   /* ---------- Herramienta: stickers ---------- */
@@ -389,6 +392,15 @@ const Panels = {
    * vez de usar la ruta del archivo directamente.
    */
   async applyMoreMemesTemplate(template) {
+    // Bajo http(s) -como en GitHub Pages- las imágenes son del mismo
+    // origen que la página, así que no contaminan el canvas: se pueden
+    // cargar directo desde su ruta en assets/MORE-MEMES/, sin pasar por
+    // los archivos pesados de base64 (esos solo son necesarios para
+    // file://, ver la nota arriba).
+    if (location.protocol !== "file:") {
+      Panels.applyMoreMemesTemplateDirect(template);
+      return;
+    }
     Panels.setBusy(true, "Preparando la imagen…");
     try {
       await Panels.loadMoreMemesData();
@@ -423,6 +435,34 @@ const Panels = {
     } finally {
       Panels.setBusy(false);
     }
+  },
+
+  /**
+   * Versión "directa" de applyMoreMemesTemplate para cuando la página se
+   * sirve por http(s) (GitHub Pages, etc.): carga la imagen desde su ruta
+   * normal en assets/MORE-MEMES/, igual que cualquier otra plantilla.
+   */
+  applyMoreMemesTemplateDirect(template) {
+    Panels.setBusy(true, "Preparando la imagen…");
+    const img = new Image();
+    img.onload = () => {
+      Panels.setBusy(false);
+      App.imageCache[template.url] = img;
+      const el = Elements.addImage({ src: template.url, width: App.canvas.width, height: App.canvas.height });
+      Elements.sendToBack(el.id);
+      App.selectedId = null;
+      Render.draw();
+      Panels.refreshLayers();
+      Panels.refreshProperties();
+      History.commit();
+      Panels.closeTemplatesOverlay();
+    };
+    img.onerror = () => {
+      Panels.setBusy(false);
+      console.warn("No se pudo cargar la plantilla de MORE MEMES:", template.url);
+      alert("No se pudo cargar esta imagen. Prueba con otra.");
+    };
+    img.src = template.url;
   },
 
   /** Convierte una data: URI (base64) en un Blob, sin pasar por fetch(). */
@@ -492,6 +532,8 @@ const Panels = {
     const search = document.getElementById("templates-search");
 
     document.getElementById("btn-open-templates").addEventListener("click", () => Panels.openTemplatesOverlay());
+    // Botón grande arriba del lienzo, más accesible que ir hasta el panel izquierdo.
+    document.getElementById("btn-quick-templates").addEventListener("click", () => Panels.openTemplatesOverlay());
     document.getElementById("btn-close-templates").addEventListener("click", () => Panels.closeTemplatesOverlay());
 
     document.querySelectorAll(".templates-tab-btn").forEach((btn) => {
