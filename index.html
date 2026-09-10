@@ -3,7 +3,9 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Meme Maker</title>
+  <title>Free Meme Maker — Editor de memes gratis</title>
+  <meta name="description" content="Crea memes gratis en el navegador. Sube una imagen, agrega texto, stickers y plantillas. Sin marca de agua." />
+  <link rel="icon" href="assets/logo.png" type="image/png" />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link
@@ -16,14 +18,19 @@
 
   <header class="app-header">
     <div class="app-header-titles">
-      <h1 class="app-title">MEME MAKER</h1>
-      <span class="app-subtitle">Editor completo</span>
+      <a class="brand" href="./" aria-label="Free Meme Maker">
+        <img class="brand-logo" src="assets/logo.png" alt="Free Meme Maker" />
+        <span class="brand-text">
+          <h1 class="app-title">MEME STUDIO</h1>
+          <span class="app-subtitle">Free Meme Maker · 100% gratis · sin watermark</span>
+        </span>
+      </a>
     </div>
     <div class="app-toolbar">
-      <button type="button" id="btn-undo" title="Deshacer (Ctrl+Z)">↺ Deshacer</button>
-      <button type="button" id="btn-redo" title="Rehacer (Ctrl+Shift+Z)">↻ Rehacer</button>
+      <button type="button" id="btn-undo" title="Deshacer (Ctrl+Z)">↩ Deshacer</button>
+      <button type="button" id="btn-redo" title="Rehacer (Ctrl+Shift+Z)">↪ Rehacer</button>
       <button type="button" id="btn-duplicate" title="Duplicar (Ctrl+C, Ctrl+V)">⧉ Duplicar</button>
-      <button type="button" id="btn-delete" title="Eliminar (Supr)">🗑️ Eliminar</button>
+      <button type="button" id="btn-delete" class="btn-danger" title="Eliminar (Supr)">🗑 Eliminar</button>
     </div>
   </header>
 
@@ -33,15 +40,16 @@
     <aside class="panel panel-left">
 
       <nav class="panel-quicknav" id="panel-quicknav" aria-label="Ir a sección">
-        <button type="button" data-target="section-imagen">🖼️ Imagen</button>
-        <button type="button" data-target="section-texto">🔤 Texto</button>
-        <button type="button" data-target="section-stickers">😀 Stickers</button>
-        <button type="button" data-target="section-formas">▭ Formas</button>
-        <button type="button" data-target="section-plantillas">🗂️ Plantillas</button>
-        <button type="button" data-target="section-fondo">🎨 Fondo</button>
+        <button type="button" data-target="section-imagen">Imagen</button>
+        <button type="button" data-target="section-texto">Texto</button>
+        <button type="button" data-target="section-stickers">Stickers</button>
+        <button type="button" data-target="section-formas">Formas</button>
+        <button type="button" data-target="section-plantillas">Plantillas</button>
+        <button type="button" data-target="section-fondo">Fondo</button>
       </nav>
 
       <section class="tool-section" id="section-imagen">
+        <h2 class="panel-kicker">Meme elements</h2>
         <h2 class="panel-title">Imagen</h2>
         <button type="button" id="btn-upload-image" class="primary-btn">Subir imagen</button>
         <input type="file" id="file-input" accept="image/*" hidden />
@@ -67,16 +75,16 @@
       <section class="tool-section" id="section-formas">
         <h2 class="panel-title">Formas</h2>
         <div class="shape-grid" id="shape-grid">
-          <button type="button" data-shape="rect" title="Rectángulo">▭</button>
-          <button type="button" data-shape="circle" title="Círculo">⬤</button>
-          <button type="button" data-shape="line" title="Línea">╱</button>
-          <button type="button" data-shape="arrow" title="Flecha">➤</button>
+          <button type="button" data-shape="rect" title="Rectángulo">Rectángulo</button>
+          <button type="button" data-shape="circle" title="Círculo">Círculo</button>
+          <button type="button" data-shape="line" title="Línea">Línea</button>
+          <button type="button" data-shape="arrow" title="Flecha">Flecha</button>
         </div>
       </section>
 
       <section class="tool-section" id="section-plantillas">
         <h2 class="panel-title">Plantillas</h2>
-        <button type="button" id="btn-open-templates" class="primary-btn">🗂️ Explorar plantillas</button>
+        <button type="button" id="btn-open-templates" class="primary-btn">Explorar plantillas</button>
         <p class="hint">Abre una ventana más grande con plantillas populares y las tuyas propias, cómoda de recorrer.</p>
       </section>
 
@@ -96,7 +104,14 @@
         <span id="canvas-size-label">800 × 800 px</span>
       </div>
       <div class="canvas-wrapper" id="canvas-wrapper">
-        <canvas id="meme-canvas" width="800" height="800"></canvas>
+        <div class="canvas-stage">
+          <canvas id="meme-canvas" width="800" height="800"></canvas>
+          <div class="canvas-empty" id="canvas-empty">
+            <img class="canvas-empty-logo" src="assets/logo.png" alt="" />
+            <p class="canvas-empty-title">Arrastra una imagen aquí</p>
+            <p class="canvas-empty-sub">o pégala con Ctrl+V, o usa las herramientas de la izquierda</p>
+          </div>
+        </div>
       </div>
     </main>
 
@@ -104,6 +119,7 @@
     <aside class="panel panel-right">
 
       <section class="tool-section">
+        <h2 class="panel-kicker">Controles de capa</h2>
         <h2 class="panel-title">Lienzo</h2>
         <label class="field-row">
           <span>Tamaño</span>
@@ -194,5 +210,20 @@
   <script src="js/panels.js"></script>
   <script src="js/export.js"></script>
   <script src="js/app.js"></script>
+  <script>
+    (function () {
+      function syncEmpty() {
+        const overlay = document.getElementById("canvas-empty");
+        const wrapper = document.getElementById("canvas-wrapper");
+        if (!overlay || !window.App) return;
+        const hasMeme = Array.isArray(App.elements) && App.elements.length > 0;
+        overlay.hidden = hasMeme;
+        overlay.style.display = hasMeme ? "none" : "flex";
+        if (wrapper) wrapper.classList.toggle("has-meme", hasMeme);
+      }
+      setInterval(syncEmpty, 250);
+    })();
+  </script>
 </body>
 </html>
+

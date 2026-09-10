@@ -24,7 +24,9 @@ const Render = {
     ctx.fillStyle = App.backgroundColor;
     ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-    if (App.elements.length === 0) {
+    Render.syncEmptyOverlay();
+
+    if (showSelection && App.elements.length === 0) {
       Render.drawEmptyHint(ctx, canvas.width, canvas.height);
     }
 
@@ -38,23 +40,28 @@ const Render = {
     }
   },
 
+  syncEmptyOverlay() {
+    const overlay = document.getElementById("canvas-empty");
+    const wrapper = document.getElementById("canvas-wrapper");
+    const hasMeme = Array.isArray(App.elements) && App.elements.length > 0;
+    if (overlay) {
+      overlay.hidden = hasMeme;
+      overlay.style.display = hasMeme ? "none" : "flex";
+    }
+    if (wrapper) wrapper.classList.toggle("has-meme", hasMeme);
+  },
+
   drawEmptyHint(ctx, width, height) {
+    // Solo el recuadro punteado. El logo y el texto viven en
+    // #canvas-empty (HTML) para que se vean nítidos y no se
+    // cuelen en la exportación.
     ctx.save();
-    ctx.strokeStyle = "#4b4d57";
-    ctx.lineWidth = 3;
-    ctx.setLineDash([12, 10]);
-    ctx.strokeRect(20, 20, width - 40, height - 40);
-    ctx.setLineDash([]);
-
-    ctx.fillStyle = "#c7c9d1";
-    ctx.font = "600 26px -apple-system, Segoe UI, Roboto, Arial, sans-serif";
-    ctx.textAlign = "center";
-    ctx.textBaseline = "middle";
-    ctx.fillText("Arrastra una imagen aquí", width / 2, height / 2 - 20);
-
-    ctx.fillStyle = "#9a9ca6";
-    ctx.font = "400 17px -apple-system, Segoe UI, Roboto, Arial, sans-serif";
-    ctx.fillText("o pégala con Ctrl+V, o usa las herramientas de la izquierda", width / 2, height / 2 + 16);
+    ctx.strokeStyle = "#ffd400";
+    ctx.globalAlpha = 0.35;
+    ctx.lineWidth = Math.max(3, Math.round(Math.min(width, height) * 0.006));
+    ctx.setLineDash([16, 12]);
+    const pad = Math.max(18, Math.round(Math.min(width, height) * 0.035));
+    ctx.strokeRect(pad, pad, width - pad * 2, height - pad * 2);
     ctx.restore();
   },
 
