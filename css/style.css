@@ -694,6 +694,39 @@ button { font-family: inherit; }
   padding: 8px 14px;
 }
 
+.moremes-subcats {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  padding: 10px 24px;
+  background: #1a0b08;
+  border-bottom: 2px solid #6a3014;
+}
+
+.moremes-subcats[hidden] { display: none; }
+
+.moremes-subcat-btn {
+  background: var(--bg-chip);
+  color: var(--text-secondary);
+  border: 2px solid #4a2010;
+  border-radius: 999px;
+  padding: 5px 12px;
+  font-size: 12px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.moremes-subcat-btn:hover {
+  border-color: var(--accent);
+  color: var(--accent);
+}
+
+.moremes-subcat-btn--active {
+  background: var(--accent);
+  border-color: #000;
+  color: var(--accent-ink);
+}
+
 .templates-close-btn {
   margin-left: auto;
   background: var(--bg-chip);

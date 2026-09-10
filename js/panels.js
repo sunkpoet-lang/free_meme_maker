@@ -280,6 +280,10 @@ const Panels = {
    * meme después sin errores.
    */
   applyTemplate(template) {
+    if (template.source === "local-moremes") {
+      Panels.applyMoreMemesTemplate(template);
+      return;
+    }
     if (template.isGif) {
       Panels.applyGifTemplate(template);
       return;
@@ -373,6 +377,94 @@ const Panels = {
     }
   },
 
+  /**
+   * Aplica una plantilla de la pestaña "MORE MEMES" (imágenes locales
+   * del propio usuario, guardadas en assets/MORE-MEMES/). Bajo file://
+   * cada archivo local tiene un origen "opaco" para el navegador: una
+   * <img> con una ruta relativa se VE bien, pero dibujarla en el canvas
+   * lo deja "contaminado" y ya no se puede exportar (error de
+   * seguridad). Por eso estas imágenes se guardaron aparte, codificadas
+   * en base64 (ver js/more-memes-data/*.js), y aquí las convertimos a
+   * un blob: -que nunca contamina el canvas, sea cual sea su origen- en
+   * vez de usar la ruta del archivo directamente.
+   */
+  async applyMoreMemesTemplate(template) {
+    Panels.setBusy(true, "Preparando la imagen…");
+    try {
+      await Panels.loadMoreMemesData();
+      const dataUri = window.MORE_MEMES_DATA_URIS && window.MORE_MEMES_DATA_URIS[template.url];
+      if (!dataUri) {
+        alert("No se pudo cargar esta imagen. Prueba con otra.");
+        return;
+      }
+      const blob = Panels.dataUriToBlob(dataUri);
+      const blobUrl = URL.createObjectURL(blob);
+
+      const img = new Image();
+      img.onload = () => {
+        App.imageCache[blobUrl] = img;
+        const el = Elements.addImage({ src: blobUrl, width: App.canvas.width, height: App.canvas.height });
+        Elements.sendToBack(el.id);
+        App.selectedId = null;
+        Render.draw();
+        Panels.refreshLayers();
+        Panels.refreshProperties();
+        History.commit();
+        Panels.closeTemplatesOverlay();
+      };
+      img.onerror = () => {
+        console.warn("No se pudo cargar la plantilla de MORE MEMES:", template.url);
+        alert("No se pudo cargar esta imagen. Prueba con otra.");
+      };
+      img.src = blobUrl;
+    } catch (err) {
+      console.warn("No se pudo aplicar la plantilla de MORE MEMES:", err);
+      alert("No se pudo cargar esta imagen. Prueba con otra.");
+    } finally {
+      Panels.setBusy(false);
+    }
+  },
+
+  /** Convierte una data: URI (base64) en un Blob, sin pasar por fetch(). */
+  dataUriToBlob(dataUri) {
+    const [header, base64] = dataUri.split(",");
+    const mimeMatch = header.match(/data:([^;]+);base64/);
+    const mime = mimeMatch ? mimeMatch[1] : "image/jpeg";
+    const binary = atob(base64);
+    const bytes = new Uint8Array(binary.length);
+    for (let i = 0; i < binary.length; i++) bytes[i] = binary.charCodeAt(i);
+    return new Blob([bytes], { type: mime });
+  },
+
+  /**
+   * Carga (una sola vez, en segundo plano) los 9 archivos con las
+   * imágenes de MORE MEMES en base64. Son pesados, así que no van como
+   * <script> fijo en index.html -eso frenaría la carga inicial de toda
+   * la app- sino que se inyectan dinámicamente recién cuando el usuario
+   * abre la pestaña "MORE MEMES" o aplica una de sus plantillas.
+   */
+  loadMoreMemesData() {
+    if (Panels._moreMemesDataPromise) return Panels._moreMemesDataPromise;
+
+    const files = typeof MORE_MEMES_DATA_FILES !== "undefined" ? MORE_MEMES_DATA_FILES : [];
+    Panels._moreMemesDataPromise = Promise.all(
+      files.map(
+        (src) =>
+          new Promise((resolve) => {
+            const script = document.createElement("script");
+            script.src = src;
+            script.onload = () => resolve();
+            script.onerror = () => {
+              console.warn("No se pudo cargar el archivo de datos de MORE MEMES:", src);
+              resolve(); // seguimos con los demás aunque uno falle
+            };
+            document.head.appendChild(script);
+          })
+      )
+    );
+    return Panels._moreMemesDataPromise;
+  },
+
   /** Muestra u oculta el overlay de "procesando" (carga/exportación de GIFs). */
   setBusy(show, message = "") {
     const overlay = document.getElementById("busy-overlay");
@@ -392,7 +484,8 @@ const Panels = {
    */
   setupTemplatesOverlay() {
     Panels.templatesOverlayOpen = false;
-    Panels.overlayState = { tab: "popular", query: "", page: 1 };
+    Panels.overlayState = { tab: "popular", query: "", page: 1, subcategory: "" };
+    Panels.setupMoreMemesSubcats();
 
     const grid = document.getElementById("templates-overlay-grid");
     const pagination = document.getElementById("templates-pagination");
@@ -407,7 +500,12 @@ const Panels = {
         btn.classList.add("templates-tab-btn--active");
         Panels.overlayState.tab = btn.dataset.tab;
         Panels.overlayState.page = 1;
+        Panels.overlayState.subcategory = "";
+        Panels.updateMoreMemesSubcatsVisibility();
         Panels.renderOverlayGrid();
+        // Si es la primera vez que se abre "MORE MEMES", precargamos en
+        // segundo plano los datos (pesados) de las imágenes en base64.
+        if (btn.dataset.tab === "moremes") Panels.loadMoreMemesData();
       });
     });
 
@@ -466,9 +564,43 @@ const Panels = {
     document.getElementById("templates-overlay").hidden = true;
   },
 
+  /**
+   * Arma la barra de "chips" para filtrar MORE MEMES por subcategoría
+   * ("Todas" + cada una de las 9 carpetas originales del usuario).
+   * Solo se ve mientras la pestaña activa es "MORE MEMES".
+   */
+  setupMoreMemesSubcats() {
+    const bar = document.getElementById("moremes-subcats");
+    if (!bar) return;
+    const categories = typeof MORE_MEMES_CATEGORIES !== "undefined" ? MORE_MEMES_CATEGORIES : [];
+
+    bar.innerHTML =
+      `<button type="button" class="moremes-subcat-btn moremes-subcat-btn--active" data-subcat="">Todas</button>` +
+      categories
+        .map((c) => `<button type="button" class="moremes-subcat-btn" data-subcat="${escapeHtml(c)}">${escapeHtml(c)}</button>`)
+        .join("");
+
+    bar.addEventListener("click", (e) => {
+      const btn = e.target.closest("[data-subcat]");
+      if (!btn) return;
+      bar.querySelectorAll(".moremes-subcat-btn").forEach((b) => b.classList.remove("moremes-subcat-btn--active"));
+      btn.classList.add("moremes-subcat-btn--active");
+      Panels.overlayState.subcategory = btn.dataset.subcat;
+      Panels.overlayState.page = 1;
+      Panels.renderOverlayGrid();
+    });
+  },
+
+  /** Muestra la barra de subcategorías solo en la pestaña "MORE MEMES". */
+  updateMoreMemesSubcatsVisibility() {
+    const bar = document.getElementById("moremes-subcats");
+    if (!bar) return;
+    bar.hidden = Panels.overlayState.tab !== "moremes";
+  },
+
   /** Lista de plantillas de la pestaña activa, ya filtrada por el buscador. */
   currentOverlayList() {
-    const { tab, query } = Panels.overlayState;
+    const { tab, query, subcategory } = Panels.overlayState;
     let list;
     if (tab === "mine") {
       list = CustomTemplates.load().map((t) => ({
@@ -478,6 +610,14 @@ const Panels = {
         id: t.id,
         description: t.description,
       }));
+    } else if (tab === "moremes") {
+      list = (typeof MORE_MEMES_TEMPLATES !== "undefined" ? MORE_MEMES_TEMPLATES : []).map((t) => ({
+        name: t.name,
+        url: t.url,
+        source: "local-moremes",
+        category: t.category,
+      }));
+      if (subcategory) list = list.filter((t) => t.category === subcategory);
     } else {
       list = Panels.onlineTemplates || [];
     }
