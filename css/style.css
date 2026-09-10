@@ -962,6 +962,33 @@ button { font-family: inherit; }
   color: var(--accent);
 }
 
+.sticker-editor-modes {
+  display: flex;
+  gap: 8px;
+  margin-top: 10px;
+}
+
+.mode-btn {
+  flex: 1 1 0;
+  padding: 8px 10px;
+  border-radius: var(--radius-sm);
+  border: 2px solid var(--border-color);
+  background: rgba(255, 255, 255, 0.04);
+  color: var(--text-secondary);
+  font-weight: 700;
+  font-size: 14px;
+  cursor: pointer;
+  transition: background 0.15s, border-color 0.15s, color 0.15s;
+}
+
+.mode-btn:hover { background: rgba(255, 255, 255, 0.08); }
+
+.mode-btn--active {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: #1a0d06;
+}
+
 .sticker-editor-canvas-wrap {
   margin: 14px 0;
   display: flex;
@@ -994,6 +1021,8 @@ button { font-family: inherit; }
 .sticker-editor-brush-row input[type="range"] {
   flex: 1;
 }
+
+.sticker-editor-brush-row[hidden] { display: none; }
 
 .sticker-editor-buttons {
   display: flex;

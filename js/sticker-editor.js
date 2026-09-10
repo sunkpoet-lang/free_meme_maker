@@ -26,6 +26,7 @@ const StickerEditor = {
   isDrawing: false,
   lastPoint: null,
   objectUrl: null,
+  mode: "brush", // "brush" | "wand"
 
   setup() {
     StickerEditor.canvas = document.getElementById("sticker-editor-canvas");
@@ -46,6 +47,9 @@ const StickerEditor = {
     document.getElementById("btn-sticker-cancel").addEventListener("click", StickerEditor.close);
     document.getElementById("btn-sticker-save").addEventListener("click", StickerEditor.save);
 
+    document.getElementById("btn-sticker-mode-brush").addEventListener("click", () => StickerEditor.setMode("brush"));
+    document.getElementById("btn-sticker-mode-wand").addEventListener("click", () => StickerEditor.setMode("wand"));
+
     const canvas = StickerEditor.canvas;
     canvas.style.touchAction = "none"; // para poder dibujar con el dedo sin que la página haga scroll
     canvas.addEventListener("pointerdown", StickerEditor.onPointerDown);
@@ -53,6 +57,18 @@ const StickerEditor = {
     canvas.addEventListener("pointerup", StickerEditor.onPointerUp);
     canvas.addEventListener("pointercancel", StickerEditor.onPointerUp);
     canvas.addEventListener("pointerleave", StickerEditor.onPointerUp);
+  },
+
+  setMode(mode) {
+    StickerEditor.mode = mode;
+    const isBrush = mode === "brush";
+    document.getElementById("btn-sticker-mode-brush").classList.toggle("mode-btn--active", isBrush);
+    document.getElementById("btn-sticker-mode-wand").classList.toggle("mode-btn--active", !isBrush);
+    document.getElementById("sticker-brush-row").hidden = !isBrush;
+    document.getElementById("sticker-wand-row").hidden = isBrush;
+    document.getElementById("sticker-editor-hint").textContent = isBrush
+      ? "Borra el fondo (arrastra sobre la imagen) hasta dejar solo la parte que quieras usar como sticker."
+      : "Haz clic sobre el fondo (una sola vez) y se borrará todo el color parecido de un jalón. Ideal para fondos lisos.";
   },
 
   /** Abre el editor con una imagen recién elegida por el usuario. */
@@ -68,6 +84,7 @@ const StickerEditor = {
       StickerEditor.objectUrl = objectUrl;
       StickerEditor.sourceImage = img;
       StickerEditor.setupCanvasFromImage(img);
+      StickerEditor.setMode("brush");
       document.getElementById("sticker-editor-overlay").hidden = false;
     };
     img.onerror = () => {
@@ -129,24 +146,90 @@ const StickerEditor = {
     }
   },
 
+  wandTolerance() {
+    const slider = document.getElementById("sticker-wand-tolerance");
+    return Math.max(1, parseInt(slider.value, 10) || 30);
+  },
+
+  /** "Varita mágica": desde el punto donde se hace clic, borra (vuelve transparente)
+   *  toda la región conectada de color parecido -relleno por inundación (flood fill)
+   *  con distancia de color, no solo comparación exacta-. Ideal para fondos lisos. */
+  floodFillErase(startX, startY, tolerance) {
+    const canvas = StickerEditor.canvas;
+    const { width, height } = canvas;
+    const sx = Math.floor(startX);
+    const sy = Math.floor(startY);
+    if (sx < 0 || sy < 0 || sx >= width || sy >= height) return;
+
+    const imageData = StickerEditor.ctx.getImageData(0, 0, width, height);
+    const data = imageData.data;
+    const startIdx = (sy * width + sx) * 4;
+    const startAlpha = data[startIdx + 3];
+    if (startAlpha < 8) return; // ya es transparente ahí, nada que hacer
+
+    const r0 = data[startIdx];
+    const g0 = data[startIdx + 1];
+    const b0 = data[startIdx + 2];
+    const tol2 = tolerance * tolerance * 3; // tolerancia^2 * 3 canales, para comparar contra distancia^2
+
+    const visited = new Uint8Array(width * height);
+    const stack = [sx, sy];
+    visited[sy * width + sx] = 1;
+
+    while (stack.length) {
+      const y = stack.pop();
+      const x = stack.pop();
+      const idx = (y * width + x) * 4;
+      const dr = data[idx] - r0;
+      const dg = data[idx + 1] - g0;
+      const db = data[idx + 2] - b0;
+      if (dr * dr + dg * dg + db * db > tol2) continue;
+
+      data[idx + 3] = 0; // borrar (transparente)
+
+      const neighbors = [
+        [x - 1, y],
+        [x + 1, y],
+        [x, y - 1],
+        [x, y + 1],
+      ];
+      for (const [nx, ny] of neighbors) {
+        if (nx < 0 || ny < 0 || nx >= width || ny >= height) continue;
+        const nIdx = ny * width + nx;
+        if (visited[nIdx]) continue;
+        visited[nIdx] = 1;
+        stack.push(nx, ny);
+      }
+    }
+
+    StickerEditor.ctx.putImageData(imageData, 0, 0);
+  },
+
   onPointerDown(evt) {
     evt.preventDefault();
     StickerEditor.canvas.setPointerCapture(evt.pointerId);
-    StickerEditor.isDrawing = true;
 
-    // Guardamos el lienzo ANTES de este trazo, para poder deshacerlo.
+    // Guardamos el lienzo ANTES de este trazo/clic, para poder deshacerlo.
     StickerEditor.undoStack.push(
       StickerEditor.ctx.getImageData(0, 0, StickerEditor.canvas.width, StickerEditor.canvas.height)
     );
     if (StickerEditor.undoStack.length > StickerEditor.MAX_UNDO_STEPS) StickerEditor.undoStack.shift();
 
     const point = StickerEditor.pointerToCanvasCoords(evt);
+
+    if (StickerEditor.mode === "wand") {
+      StickerEditor.floodFillErase(point.x, point.y, StickerEditor.wandTolerance());
+      StickerEditor.isDrawing = false;
+      return;
+    }
+
+    StickerEditor.isDrawing = true;
     StickerEditor.eraseAt(point.x, point.y);
     StickerEditor.lastPoint = point;
   },
 
   onPointerMove(evt) {
-    if (!StickerEditor.isDrawing) return;
+    if (!StickerEditor.isDrawing || StickerEditor.mode !== "brush") return;
     evt.preventDefault();
     const point = StickerEditor.pointerToCanvasCoords(evt);
     StickerEditor.eraseLine(StickerEditor.lastPoint, point);
