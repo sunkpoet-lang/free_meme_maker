@@ -240,3 +240,12 @@ html[data-theme="win95"] ::-webkit-scrollbar-thumb {
 html[data-theme="win95"] ::-webkit-scrollbar-corner {
   background: #dfdfdf;
 }
+
+/* Logo alternativo con look de Windows 95 (el archivo ya lo tiene el
+   usuario guardado en assets/WIN95.png). "content: url(...)" cambia
+   la imagen que se ve sin tocar el "src" real del <img> -así el HTML
+   no necesita saber qué tema está activo-. */
+html[data-theme="win95"] .brand-logo,
+html[data-theme="win95"] .canvas-empty-logo {
+  content: url("../assets/WIN95.png");
+}
