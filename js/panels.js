@@ -115,6 +115,16 @@ const Panels = {
         submitGifUrl();
       }
     });
+
+    const videoBtn = document.getElementById("btn-upload-video");
+    const videoInput = document.getElementById("video-file-input");
+    videoBtn.addEventListener("click", () => videoInput.click());
+    videoInput.addEventListener("change", () => {
+      if (videoInput.files && videoInput.files[0]) {
+        Interactions.loadVideoFile(videoInput.files[0]);
+      }
+      videoInput.value = ""; // permite volver a elegir el mismo archivo
+    });
   },
 
   /* ---------- Herramienta: texto ---------- */

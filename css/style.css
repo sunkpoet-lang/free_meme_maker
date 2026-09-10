@@ -349,6 +349,20 @@ button { font-family: inherit; }
   color: var(--text-secondary);
 }
 
+.video-to-gif-row {
+  margin-top: 12px;
+  padding-top: 12px;
+  border-top: 1px solid var(--border-color);
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.video-to-gif-row .field-label {
+  font-size: 12px;
+  color: var(--text-secondary);
+}
+
 .gif-url-row input[type="text"],
 .field-row input[type="text"],
 .field-row input[type="number"],

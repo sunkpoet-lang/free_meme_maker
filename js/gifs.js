@@ -150,6 +150,94 @@ const GifEngine = {
   },
 
   /**
+   * Convierte un archivo de video (subido por el usuario, arrastrado,
+   * o pegado) en fotogramas listos para animar -mismo formato que
+   * decodeAndCompose/loadFromUrl: { width, height, frames: [{canvas,
+   * delay}] }-, para que se pueda insertar en el lienzo exactamente
+   * igual que cualquier plantilla GIF (Interactions.insertDecodedGif).
+   *
+   * Como el archivo ya está en la computadora del usuario, se lee con
+   * un <video> oculto y un blob: URL -eso NUNCA "contamina" el canvas,
+   * a diferencia de una ruta de archivo relativa bajo file://-, así que
+   * funciona igual de bien abriendo el editor con doble clic que
+   * publicado en internet.
+   *
+   * Para no generar GIFs enormes/lentísimos de procesar, se recorta a
+   * los primeros `maxDurationSec` segundos, se muestrea a `fps`
+   * fotogramas por segundo, y se reduce el tamaño si hace falta para
+   * que el lado más largo no pase de `maxDimension` píxeles.
+   */
+  async framesFromVideoFile(file, { fps = 10, maxDurationSec = 8, maxDimension = 480 } = {}) {
+    const video = document.createElement("video");
+    video.muted = true;
+    video.playsInline = true;
+    video.preload = "auto";
+
+    const objectUrl = URL.createObjectURL(file);
+    video.src = objectUrl;
+
+    try {
+      await new Promise((resolve, reject) => {
+        video.onloadedmetadata = () => resolve();
+        video.onerror = () => reject(new Error("No se pudo leer el video. Prueba con otro archivo."));
+      });
+
+      const rawDuration = video.duration;
+      const duration = Math.min(
+        Number.isFinite(rawDuration) && rawDuration > 0 ? rawDuration : maxDurationSec,
+        maxDurationSec
+      );
+
+      const sourceWidth = video.videoWidth;
+      const sourceHeight = video.videoHeight;
+      if (!sourceWidth || !sourceHeight) {
+        throw new Error("No se pudo leer el tamaño del video.");
+      }
+
+      const scale = Math.min(1, maxDimension / Math.max(sourceWidth, sourceHeight));
+      const width = Math.max(1, Math.round(sourceWidth * scale));
+      const height = Math.max(1, Math.round(sourceHeight * scale));
+
+      const frameCount = Math.max(1, Math.round(duration * fps));
+      const delay = Math.round(1000 / fps);
+
+      const drawCanvas = document.createElement("canvas");
+      drawCanvas.width = width;
+      drawCanvas.height = height;
+      const drawCtx = drawCanvas.getContext("2d");
+
+      const frames = [];
+      for (let i = 0; i < frameCount; i++) {
+        const t = Math.min(Math.max(duration - 0.02, 0), i / fps);
+        await GifEngine.seekVideoTo(video, t);
+
+        drawCtx.drawImage(video, 0, 0, width, height);
+        const frameCanvas = document.createElement("canvas");
+        frameCanvas.width = width;
+        frameCanvas.height = height;
+        frameCanvas.getContext("2d").drawImage(drawCanvas, 0, 0);
+        frames.push({ canvas: frameCanvas, delay });
+      }
+
+      return { width, height, frames };
+    } finally {
+      URL.revokeObjectURL(objectUrl);
+    }
+  },
+
+  /** Mueve la cabeza de reproducción de un <video> a un momento exacto y espera a que el fotograma esté listo. */
+  seekVideoTo(video, time) {
+    return new Promise((resolve) => {
+      const onSeeked = () => {
+        video.removeEventListener("seeked", onSeeked);
+        resolve();
+      };
+      video.addEventListener("seeked", onSeeked);
+      video.currentTime = time;
+    });
+  },
+
+  /**
    * Codifica una lista de fotogramas (canvases del mismo tamaño)
    * como un GIF animado nuevo. Devuelve un Uint8Array con los bytes
    * del archivo .gif final.

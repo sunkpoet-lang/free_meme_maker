@@ -64,6 +64,13 @@
           <input type="text" id="gif-url-input" placeholder="https://ejemplo.com/mi-gif.gif" />
           <button type="button" id="btn-load-gif-url" class="secondary-btn">Cargar GIF desde URL</button>
         </div>
+
+        <div class="video-to-gif-row">
+          <label for="video-file-input" class="field-label">Convertir un video a GIF</label>
+          <button type="button" id="btn-upload-video" class="secondary-btn">Subir video (se convierte a GIF)</button>
+          <input type="file" id="video-file-input" accept="video/*" hidden />
+          <p class="hint">Se recortan los primeros 8 segundos y se reduce el tamaño, para que el GIF no quede demasiado pesado.</p>
+        </div>
       </section>
 
       <section class="tool-section" id="section-texto">

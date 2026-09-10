@@ -154,6 +154,14 @@ const Interactions = {
             return;
           }
         }
+        if (item.kind === "file" && item.type.startsWith("video/")) {
+          const file = item.getAsFile();
+          if (file) {
+            evt.preventDefault();
+            Interactions.loadVideoFile(file);
+            return;
+          }
+        }
       }
     }
 
@@ -186,7 +194,12 @@ const Interactions = {
       wrapper.classList.remove("drag-over");
       const files = e.dataTransfer && e.dataTransfer.files;
       if (files && files.length > 0) {
-        Interactions.loadImageFile(files[0]);
+        const file = files[0];
+        if (file.type && file.type.startsWith("video/")) {
+          Interactions.loadVideoFile(file);
+        } else {
+          Interactions.loadImageFile(file);
+        }
       }
     });
   },
@@ -288,6 +301,25 @@ const Interactions = {
       console.warn("No se pudo cargar el GIF desde esa URL:", url, err);
       alert("No se pudo cargar un GIF desde esa URL. Revisa que el enlace apunte directamente a un archivo .gif y que el sitio permita descargarlo.");
       return false;
+    } finally {
+      Panels.setBusy(false);
+    }
+  },
+
+  /**
+   * Convierte un video subido (o arrastrado/pegado) a un GIF animado y
+   * lo inserta en el lienzo, igual que cualquier plantilla GIF. Se
+   * recorta a los primeros segundos y se reduce el tamaño (ver
+   * GifEngine.framesFromVideoFile) para que no quede pesadísimo.
+   */
+  async loadVideoFile(file) {
+    Panels.setBusy(true, "Convirtiendo el video a GIF… esto puede tardar unos segundos.");
+    try {
+      const decoded = await GifEngine.framesFromVideoFile(file);
+      Interactions.insertDecodedGif(decoded);
+    } catch (err) {
+      console.warn("No se pudo convertir este video a GIF:", err);
+      alert("No se pudo convertir este video a GIF. Prueba con otro archivo (formatos como .mp4, .mov o .webm funcionan mejor).");
     } finally {
       Panels.setBusy(false);
     }
