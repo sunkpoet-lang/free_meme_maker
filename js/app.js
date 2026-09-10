@@ -22,6 +22,7 @@ document.addEventListener("DOMContentLoaded", () => {
   Exporter.setup();
   MemeCounter.setup();
   StickerEditor.setup();
+  Win95Sounds.setup();
 
   console.log("Meme Maker · Editor completo cargado correctamente.");
 });

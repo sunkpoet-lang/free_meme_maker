@@ -50,6 +50,9 @@
       <button type="button" class="theme-btn" data-theme="dark" title="Tema Oscuro" aria-label="Tema Oscuro">🌙</button>
       <button type="button" class="theme-btn" data-theme="win95" title="Tema Windows 95" aria-label="Tema Windows 95">🪟</button>
     </div>
+    <div class="theme-switcher" id="win95-sound-switcher" hidden>
+      <button type="button" id="btn-win95-sound-toggle" class="theme-btn theme-btn--active" title="Sonidos activados (clic para silenciar)" aria-label="Silenciar o activar los sonidos de Windows 95">🔊</button>
+    </div>
     <div class="app-toolbar">
       <button type="button" id="btn-undo" title="Deshacer (Ctrl+Z)">↩ Deshacer</button>
       <button type="button" id="btn-redo" title="Rehacer (Ctrl+Shift+Z)">↪ Rehacer</button>
@@ -296,6 +299,7 @@
   <script src="js/sticker-editor.js"></script>
   <script src="js/panels.js"></script>
   <script src="js/export.js"></script>
+  <script src="js/win95-sounds.js"></script>
   <script src="js/app.js"></script>
   <script>
     (function () {
