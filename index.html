@@ -81,6 +81,12 @@
       <section class="tool-section" id="section-stickers">
         <h2 class="panel-title">Stickers</h2>
         <div class="sticker-grid" id="sticker-grid"></div>
+
+        <div class="my-stickers-row">
+          <p class="field-label">Mis stickers</p>
+          <div class="sticker-grid sticker-grid--custom" id="custom-sticker-grid"></div>
+          <p class="hint" id="custom-sticker-empty-hint">Aún no has creado ningún sticker. Usa el botón "🎨 Crear sticker" arriba del lienzo.</p>
+        </div>
       </section>
 
       <section class="tool-section" id="section-formas">
@@ -114,6 +120,8 @@
       <div class="canvas-quick-actions">
         <button type="button" id="btn-quick-add-text" class="primary-btn primary-btn--quick">📝 Agregar texto</button>
         <button type="button" id="btn-quick-templates" class="primary-btn primary-btn--quick">🖼️ Explorar plantillas</button>
+        <button type="button" id="btn-quick-create-sticker" class="primary-btn primary-btn--quick">🎨 Crear sticker</button>
+        <input type="file" id="sticker-source-input" accept="image/*" hidden />
       </div>
       <div class="canvas-toolbar">
         <span id="canvas-size-label">800 × 800 px</span>
@@ -210,6 +218,31 @@
     </div>
   </div>
 
+  <!-- Editor de stickers: sube una foto y borra el fondo a mano hasta
+       dejar solo lo que quieras usar como sticker (como el "Crear
+       sticker" de WhatsApp, pero recortando con el dedo o el mouse). -->
+  <div class="sticker-editor-overlay" id="sticker-editor-overlay" hidden>
+    <div class="sticker-editor-box">
+      <h2>Crear sticker</h2>
+      <p class="hint">Borra el fondo (arrastra sobre la imagen) hasta dejar solo la parte que quieras usar como sticker.</p>
+      <div class="sticker-editor-canvas-wrap">
+        <canvas id="sticker-editor-canvas"></canvas>
+      </div>
+      <div class="sticker-editor-controls">
+        <label class="field-row field-row--inline sticker-editor-brush-row">
+          <span>Tamaño del borrador</span>
+          <input type="range" id="sticker-brush-size" min="10" max="90" value="35" />
+        </label>
+        <div class="sticker-editor-buttons">
+          <button type="button" id="btn-sticker-undo" class="secondary-btn">↩ Deshacer</button>
+          <button type="button" id="btn-sticker-reset" class="secondary-btn">Reiniciar</button>
+          <button type="button" id="btn-sticker-cancel" class="secondary-btn">Cancelar</button>
+          <button type="button" id="btn-sticker-save" class="primary-btn">✅ Usar como sticker</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
   <!-- Overlay de "procesando" (se usa al cargar/exportar GIFs animados,
        que pueden tardar unos segundos) -->
   <div class="busy-overlay" id="busy-overlay" hidden>
@@ -223,12 +256,14 @@
   <script src="js/counter.js"></script>
   <script src="js/elements.js"></script>
   <script src="js/customtemplates.js"></script>
+  <script src="js/customstickers.js"></script>
   <script src="js/more-memes-manifest.js"></script>
   <script src="js/lib/gifuct.js"></script>
   <script src="js/lib/gifenc.js"></script>
   <script src="js/gifs.js"></script>
   <script src="js/render.js"></script>
   <script src="js/interactions.js"></script>
+  <script src="js/sticker-editor.js"></script>
   <script src="js/panels.js"></script>
   <script src="js/export.js"></script>
   <script src="js/app.js"></script>

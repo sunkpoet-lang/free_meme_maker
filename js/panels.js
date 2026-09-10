@@ -156,6 +156,69 @@ const Panels = {
       Panels.refreshProperties();
       History.commit();
     });
+
+    Panels.setupCustomStickers();
+  },
+
+  /**
+   * Grilla de "Mis stickers" (los que el usuario recortó con el
+   * editor de stickers, ver sticker-editor.js). Vive debajo de los
+   * emojis, en la misma sección "Stickers".
+   */
+  setupCustomStickers() {
+    const grid = document.getElementById("custom-sticker-grid");
+    if (!grid) return;
+
+    grid.addEventListener("click", (e) => {
+      const delBtn = e.target.closest(".custom-sticker-delete");
+      if (delBtn) {
+        CustomStickers.remove(delBtn.dataset.id);
+        Panels.refreshCustomStickers();
+        return;
+      }
+
+      const item = e.target.closest(".custom-sticker-item");
+      if (!item) return;
+      const sticker = CustomStickers.load().find((s) => s.id === item.dataset.id);
+      if (!sticker) return;
+
+      const maxInsertSize = Math.min(App.canvas.width, App.canvas.height) * 0.45;
+      const insertScale = Math.min(1, maxInsertSize / Math.max(sticker.width, sticker.height));
+      const insertWidth = Math.max(20, Math.round(sticker.width * insertScale));
+      const insertHeight = Math.max(20, Math.round(sticker.height * insertScale));
+
+      const img = new Image();
+      img.onload = () => {
+        App.imageCache[sticker.dataUrl] = img;
+        Elements.addImage({ src: sticker.dataUrl, width: insertWidth, height: insertHeight });
+        Render.draw();
+        Panels.refreshLayers();
+        Panels.refreshProperties();
+        History.commit();
+      };
+      img.src = sticker.dataUrl;
+    });
+
+    Panels.refreshCustomStickers();
+  },
+
+  refreshCustomStickers() {
+    const grid = document.getElementById("custom-sticker-grid");
+    const emptyHint = document.getElementById("custom-sticker-empty-hint");
+    if (!grid) return;
+
+    const stickers = CustomStickers.load();
+    emptyHint.hidden = stickers.length > 0;
+
+    grid.innerHTML = stickers
+      .map(
+        (s) => `
+        <div class="custom-sticker-item" data-id="${s.id}" title="Agregar al lienzo">
+          <img src="${s.dataUrl}" alt="Sticker" />
+          <button type="button" class="custom-sticker-delete" data-id="${s.id}" title="Eliminar este sticker">✕</button>
+        </div>`
+      )
+      .join("");
   },
 
   /* ---------- Herramienta: formas ---------- */

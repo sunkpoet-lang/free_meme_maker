@@ -19,6 +19,7 @@ document.addEventListener("DOMContentLoaded", () => {
   Panels.setup();
   Exporter.setup();
   MemeCounter.setup();
+  StickerEditor.setup();
 
   console.log("Meme Maker · Editor completo cargado correctamente.");
 });
