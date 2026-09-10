@@ -18,6 +18,7 @@ document.addEventListener("DOMContentLoaded", () => {
   Interactions.setup();
   Panels.setup();
   Exporter.setup();
+  MemeCounter.setup();
 
   console.log("Meme Maker · Editor completo cargado correctamente.");
 });

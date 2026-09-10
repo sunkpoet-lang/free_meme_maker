@@ -82,6 +82,8 @@ const Exporter = {
     document.body.appendChild(link);
     link.click();
     link.remove();
+
+    MemeCounter.increment();
   },
 
   /**
@@ -150,6 +152,8 @@ const Exporter = {
       link.click();
       link.remove();
       setTimeout(() => URL.revokeObjectURL(url), 5000);
+
+      MemeCounter.increment();
     } catch (err) {
       console.warn("No se pudo generar el GIF animado:", err);
       alert("Ocurrió un error al generar el GIF animado. Intenta de nuevo.");
