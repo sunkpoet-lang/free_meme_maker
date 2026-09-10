@@ -531,6 +531,27 @@ button { font-family: inherit; }
 
 .custom-sticker-delete:hover { filter: brightness(1.15); }
 
+.custom-sticker-download {
+  position: absolute;
+  top: -6px;
+  left: -6px;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: var(--accent);
+  color: #1a0d06;
+  border: 2px solid #000;
+  font-size: 10px;
+  line-height: 1;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+}
+
+.custom-sticker-download:hover { filter: brightness(1.15); }
+
 .template-btn img {
   width: 100%;
   aspect-ratio: 4 / 3;

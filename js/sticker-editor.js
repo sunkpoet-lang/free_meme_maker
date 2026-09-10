@@ -46,6 +46,7 @@ const StickerEditor = {
     document.getElementById("btn-sticker-reset").addEventListener("click", StickerEditor.reset);
     document.getElementById("btn-sticker-cancel").addEventListener("click", StickerEditor.close);
     document.getElementById("btn-sticker-save").addEventListener("click", StickerEditor.save);
+    document.getElementById("btn-sticker-download").addEventListener("click", StickerEditor.download);
 
     document.getElementById("btn-sticker-mode-brush").addEventListener("click", () => StickerEditor.setMode("brush"));
     document.getElementById("btn-sticker-mode-wand").addEventListener("click", () => StickerEditor.setMode("wand"));
@@ -293,11 +294,13 @@ const StickerEditor = {
     };
   },
 
-  save() {
+  /** Recorta el canvas de trabajo al contenido que quede (sin fondo) y
+   *  devuelve el recorte listo para usar, o null si no queda nada. */
+  getCroppedResult() {
     const bounds = StickerEditor.computeContentBounds();
     if (!bounds) {
       alert("Borraste toda la imagen -no queda nada para usar como sticker. Prueba \"Reiniciar\" y borra solo el fondo.");
-      return;
+      return null;
     }
 
     const cropCanvas = document.createElement("canvas");
@@ -307,7 +310,33 @@ const StickerEditor = {
       .getContext("2d")
       .drawImage(StickerEditor.canvas, bounds.x, bounds.y, bounds.width, bounds.height, 0, 0, bounds.width, bounds.height);
 
-    const dataUrl = cropCanvas.toDataURL("image/png");
+    return { cropCanvas, bounds, dataUrl: cropCanvas.toDataURL("image/png") };
+  },
+
+  /** Descarga cualquier PNG con transparencia (data URL) como archivo suelto,
+   *  para usarlo fuera de la app (WhatsApp, Telegram, etc.). */
+  downloadDataUrl(dataUrl, filename) {
+    const link = document.createElement("a");
+    link.href = dataUrl;
+    link.download = filename;
+    document.body.appendChild(link);
+    link.click();
+    link.remove();
+  },
+
+  /** Descarga el sticker recortado como PNG transparente, SIN agregarlo al
+   *  lienzo ni guardarlo en "Mis stickers" -por si solo quieres el archivo
+   *  suelto para usarlo en otro lado (como sticker de WhatsApp, por ejemplo). */
+  download() {
+    const result = StickerEditor.getCroppedResult();
+    if (!result) return;
+    StickerEditor.downloadDataUrl(result.dataUrl, "sticker.png");
+  },
+
+  save() {
+    const result = StickerEditor.getCroppedResult();
+    if (!result) return;
+    const { cropCanvas, bounds, dataUrl } = result;
 
     // Tamaño con el que se inserta en el lienzo: proporcional al recorte,
     // sin pasarse de un poco menos de la mitad del lienzo actual.

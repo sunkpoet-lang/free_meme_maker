@@ -177,6 +177,13 @@ const Panels = {
         return;
       }
 
+      const dlBtn = e.target.closest(".custom-sticker-download");
+      if (dlBtn) {
+        const sticker = CustomStickers.load().find((s) => s.id === dlBtn.dataset.id);
+        if (sticker) StickerEditor.downloadDataUrl(sticker.dataUrl, "sticker.png");
+        return;
+      }
+
       const item = e.target.closest(".custom-sticker-item");
       if (!item) return;
       const sticker = CustomStickers.load().find((s) => s.id === item.dataset.id);
@@ -215,6 +222,7 @@ const Panels = {
         (s) => `
         <div class="custom-sticker-item" data-id="${s.id}" title="Agregar al lienzo">
           <img src="${s.dataUrl}" alt="Sticker" />
+          <button type="button" class="custom-sticker-download" data-id="${s.id}" title="Descargar este sticker (PNG transparente)">⬇</button>
           <button type="button" class="custom-sticker-delete" data-id="${s.id}" title="Eliminar este sticker">✕</button>
         </div>`
       )
