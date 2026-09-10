@@ -23,6 +23,11 @@ const App = {
 
   imageCache: {},        // src (dataURL) -> HTMLImageElement ya cargada
 
+  // id de plantilla GIF -> { width, height, frames: [{canvas, delay}] }.
+  // Aparte de "elements" a propósito: los fotogramas pesan demasiado
+  // para guardarlos en cada foto del historial de deshacer/rehacer.
+  gifCache: {},
+
   dragState: {
     mode: null,           // "move" | "resize" | "rotate" | null
     pointerStart: { x: 0, y: 0 },

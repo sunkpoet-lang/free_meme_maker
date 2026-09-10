@@ -32,24 +32,39 @@
     <!-- PANEL IZQUIERDO: herramientas de creación -->
     <aside class="panel panel-left">
 
-      <section class="tool-section">
+      <nav class="panel-quicknav" id="panel-quicknav" aria-label="Ir a sección">
+        <button type="button" data-target="section-imagen">🖼️ Imagen</button>
+        <button type="button" data-target="section-texto">🔤 Texto</button>
+        <button type="button" data-target="section-stickers">😀 Stickers</button>
+        <button type="button" data-target="section-formas">▭ Formas</button>
+        <button type="button" data-target="section-plantillas">🗂️ Plantillas</button>
+        <button type="button" data-target="section-fondo">🎨 Fondo</button>
+      </nav>
+
+      <section class="tool-section" id="section-imagen">
         <h2 class="panel-title">Imagen</h2>
         <button type="button" id="btn-upload-image" class="primary-btn">Subir imagen</button>
         <input type="file" id="file-input" accept="image/*" hidden />
         <p class="hint">También puedes arrastrar una imagen al lienzo o pegarla con Ctrl+V.</p>
+
+        <div class="gif-url-row">
+          <label for="gif-url-input" class="field-label">Cargar un GIF desde un enlace (URL)</label>
+          <input type="text" id="gif-url-input" placeholder="https://ejemplo.com/mi-gif.gif" />
+          <button type="button" id="btn-load-gif-url" class="secondary-btn">Cargar GIF desde URL</button>
+        </div>
       </section>
 
-      <section class="tool-section">
+      <section class="tool-section" id="section-texto">
         <h2 class="panel-title">Texto</h2>
         <button type="button" id="btn-add-text" class="primary-btn">+ Agregar texto</button>
       </section>
 
-      <section class="tool-section">
+      <section class="tool-section" id="section-stickers">
         <h2 class="panel-title">Stickers</h2>
         <div class="sticker-grid" id="sticker-grid"></div>
       </section>
 
-      <section class="tool-section">
+      <section class="tool-section" id="section-formas">
         <h2 class="panel-title">Formas</h2>
         <div class="shape-grid" id="shape-grid">
           <button type="button" data-shape="rect" title="Rectángulo">▭</button>
@@ -59,12 +74,13 @@
         </div>
       </section>
 
-      <section class="tool-section">
+      <section class="tool-section" id="section-plantillas">
         <h2 class="panel-title">Plantillas</h2>
-        <div class="template-grid" id="template-grid"></div>
+        <button type="button" id="btn-open-templates" class="primary-btn">🗂️ Explorar plantillas</button>
+        <p class="hint">Abre una ventana más grande con plantillas populares y las tuyas propias, cómoda de recorrer.</p>
       </section>
 
-      <section class="tool-section">
+      <section class="tool-section" id="section-fondo">
         <h2 class="panel-title">Fondo</h2>
         <label class="field-row">
           <span>Color de fondo</span>
@@ -127,6 +143,7 @@
             <option value="png">PNG</option>
             <option value="jpeg">JPG</option>
             <option value="webp">WEBP</option>
+            <option value="gif" id="export-format-gif-option" hidden>GIF animado</option>
           </select>
         </label>
         <label class="field-row" id="quality-row">
@@ -140,8 +157,38 @@
 
   </div>
 
+  <!-- Ventana grande de plantillas (aprovecha todo el ancho de la pantalla) -->
+  <div class="templates-overlay" id="templates-overlay" hidden>
+    <div class="templates-overlay-header">
+      <h2>Plantillas</h2>
+      <div class="templates-tabs">
+        <button type="button" class="templates-tab-btn templates-tab-btn--active" data-tab="popular">Explorar</button>
+        <button type="button" class="templates-tab-btn" data-tab="mine">Mis plantillas</button>
+      </div>
+      <input type="search" id="templates-search" placeholder="Buscar plantilla…" />
+      <button type="button" id="btn-close-templates" class="templates-close-btn" title="Cerrar (Esc)">✕ Cerrar</button>
+    </div>
+    <div class="templates-overlay-body" id="templates-overlay-body">
+      <div class="templates-overlay-grid" id="templates-overlay-grid"></div>
+      <div class="templates-pagination" id="templates-pagination"></div>
+    </div>
+  </div>
+
+  <!-- Overlay de "procesando" (se usa al cargar/exportar GIFs animados,
+       que pueden tardar unos segundos) -->
+  <div class="busy-overlay" id="busy-overlay" hidden>
+    <div class="busy-box">
+      <div class="busy-spinner"></div>
+      <p id="busy-message">Procesando…</p>
+    </div>
+  </div>
+
   <script src="js/state.js"></script>
   <script src="js/elements.js"></script>
+  <script src="js/customtemplates.js"></script>
+  <script src="js/lib/gifuct.js"></script>
+  <script src="js/lib/gifenc.js"></script>
+  <script src="js/gifs.js"></script>
   <script src="js/render.js"></script>
   <script src="js/interactions.js"></script>
   <script src="js/panels.js"></script>

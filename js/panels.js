@@ -10,20 +10,62 @@
      - el tamaño del lienzo
    ========================================================= */
 
+const TEMPLATES_PAGE_SIZE = 50;
+
 const Panels = {
   setup() {
+    Panels.setupQuickNav();
     Panels.setupToolbar();
     Panels.setupImageTool();
     Panels.setupTextTool();
     Panels.setupStickers();
     Panels.setupShapes();
     Panels.setupTemplates();
+    Panels.setupTemplatesOverlay();
     Panels.setupBackground();
     Panels.setupCanvasSize();
     Panels.setupPropertiesDelegation();
 
     Panels.refreshLayers();
     Panels.refreshProperties();
+  },
+
+  /* ---------- Navegación rápida del panel izquierdo ---------- */
+
+  /**
+   * El panel izquierdo tiene muchas secciones (Imagen, Texto, Stickers,
+   * Formas, Plantillas, Mis plantillas, Fondo) y hay que hacer scroll
+   * para llegar a las últimas. Esta barra fija (arriba del panel)
+   * permite saltar directo a cualquier sección con un clic, y resalta
+   * brevemente la sección de destino para que sea fácil ubicarla.
+   */
+  setupQuickNav() {
+    const nav = document.getElementById("panel-quicknav");
+    if (!nav) return;
+
+    nav.addEventListener("click", (e) => {
+      const btn = e.target.closest("[data-target]");
+      if (!btn) return;
+
+      // "Plantillas" ya no es una sección larga con una grilla dentro:
+      // ahora abre directo la ventana grande de plantillas.
+      if (btn.dataset.target === "section-plantillas") {
+        Panels.openTemplatesOverlay();
+        return;
+      }
+
+      const target = document.getElementById(btn.dataset.target);
+      if (!target) return;
+
+      target.scrollIntoView({ behavior: "smooth", block: "start" });
+
+      // Reinicia la animación de resaltado aunque se haga clic varias
+      // veces seguidas en el mismo botón.
+      target.classList.remove("tool-section--highlight");
+      void target.offsetWidth; // fuerza un reflow
+      target.classList.add("tool-section--highlight");
+      setTimeout(() => target.classList.remove("tool-section--highlight"), 1100);
+    });
   },
 
   /* ---------- Barra superior: deshacer / rehacer / duplicar / eliminar ---------- */
@@ -53,6 +95,25 @@ const Panels = {
         Interactions.loadImageFile(input.files[0]);
       }
       input.value = ""; // permite volver a elegir el mismo archivo
+    });
+
+    const gifUrlInput = document.getElementById("gif-url-input");
+    const gifUrlBtn = document.getElementById("btn-load-gif-url");
+    const submitGifUrl = async () => {
+      const url = gifUrlInput.value.trim();
+      if (!url) {
+        gifUrlInput.focus();
+        return;
+      }
+      const ok = await Interactions.loadGifFromUrl(url);
+      if (ok) gifUrlInput.value = "";
+    };
+    gifUrlBtn.addEventListener("click", submitGifUrl);
+    gifUrlInput.addEventListener("keydown", (e) => {
+      if (e.key === "Enter") {
+        e.preventDefault();
+        submitGifUrl();
+      }
     });
   },
 
@@ -100,40 +161,432 @@ const Panels = {
     });
   },
 
-  /* ---------- Herramienta: plantillas ---------- */
+  /* ---------- Herramienta: plantillas (en línea, vía la API pública de Imgflip) ---------- */
 
-  setupTemplates() {
-    const grid = document.getElementById("template-grid");
-    grid.innerHTML = TEMPLATES.map(
-      (t, i) => `
-      <button type="button" class="template-btn" data-index="${i}">
-        <img src="${generateTemplateDataURL(t, 120, 80)}" alt="${t.name}" />
-        <span>${t.category}</span>
-      </button>`
-    ).join("");
+  /**
+   * Intenta traer plantillas reales y reconocibles desde la API pública
+   * y gratuita de Imgflip (api.imgflip.com/get_memes) — no requiere
+   * cuenta ni llave de API, está pensada justo para esto. Si falla
+   * (sin internet, el servicio no responde, etc.) usamos nuestras
+   * plantillas de ejemplo generadas localmente como respaldo, para que
+   * el panel nunca quede vacío ni rompa la aplicación.
+   */
+  /**
+   * Combina tres fuentes públicas y gratuitas de plantillas:
+   *  - Imgflip (api.imgflip.com/get_memes): ~100 plantillas estáticas.
+   *  - Imgflip GIF (get_memes?type=gif): plantillas animadas -las
+   *    únicas de las tres que se pueden editar y exportar como GIF
+   *    animado real (ver gifs.js). Imgflip solo cobra por generar el
+   *    GIF final en SU servidor -listar cuáles existen es gratis, así
+   *    que hacemos la composición nosotros mismos en el navegador.
+   *  - memegen (api.memegen.link/templates): varios cientos de
+   *    plantillas estáticas más (proyecto de código abierto, activo).
+   * Si alguna falla, seguimos con las que sí respondieron. Si las tres
+   * fallan (por ejemplo sin internet), usamos las plantillas de
+   * ejemplo generadas localmente para que el panel nunca quede vacío.
+   */
+  async setupTemplates() {
+    let imgflipTemplates = [];
+    let imgflipGifTemplates = [];
+    let memegenTemplates = [];
+    let imgflipFailed = false;
+    let imgflipGifFailed = false;
+    let memegenFailed = false;
 
-    grid.addEventListener("click", (e) => {
-      const btn = e.target.closest(".template-btn");
-      if (!btn) return;
-      const template = TEMPLATES[Number(btn.dataset.index)];
-      Panels.applyTemplate(template);
-    });
+    try {
+      const res = await fetch("https://api.imgflip.com/get_memes");
+      const data = await res.json();
+      if (data && data.success && Array.isArray(data.data.memes)) {
+        imgflipTemplates = data.data.memes.map((m) => ({
+          name: m.name,
+          url: m.url,
+          source: "imgflip",
+        }));
+      } else {
+        imgflipFailed = true;
+      }
+    } catch (err) {
+      console.warn("No se pudieron cargar plantillas de Imgflip:", err);
+      imgflipFailed = true;
+    }
+
+    try {
+      const resGif = await fetch("https://api.imgflip.com/get_memes?type=gif");
+      const dataGif = await resGif.json();
+      if (dataGif && dataGif.success && Array.isArray(dataGif.data.memes)) {
+        imgflipGifTemplates = dataGif.data.memes.map((m) => ({
+          name: m.name,
+          url: m.url,
+          source: "imgflip-gif",
+          isGif: true,
+        }));
+      } else {
+        imgflipGifFailed = true;
+      }
+    } catch (err) {
+      console.warn("No se pudieron cargar plantillas GIF de Imgflip:", err);
+      imgflipGifFailed = true;
+    }
+
+    try {
+      const res2 = await fetch("https://api.memegen.link/templates");
+      const data2 = await res2.json();
+      if (Array.isArray(data2)) {
+        memegenTemplates = data2
+          .filter((t) => t.id && t.blank)
+          .map((t) => ({
+            name: t.name || t.id,
+            url: t.blank,
+            source: "memegen",
+          }));
+      } else {
+        memegenFailed = true;
+      }
+    } catch (err) {
+      console.warn("No se pudieron cargar plantillas de memegen:", err);
+      memegenFailed = true;
+    }
+
+    let templates = [...imgflipTemplates, ...imgflipGifTemplates, ...memegenTemplates];
+    let usingFallback = false;
+
+    if (templates.length === 0) {
+      usingFallback = true;
+      templates = TEMPLATES.map((t) => ({
+        name: t.name,
+        url: generateTemplateDataURL(t, 300, 300),
+        source: "local",
+      }));
+    }
+
+    Panels.onlineTemplates = templates;
+    Panels.onlineTemplatesFallback = usingFallback;
+    // Se cargó al menos una fuente, pero no las tres: no es un fallo
+    // total, solo avisamos que hay menos variedad de la esperada.
+    Panels.onlineTemplatesPartial = !usingFallback && (imgflipFailed || imgflipGifFailed || memegenFailed);
+
+    // Si el usuario ya tenía abierta la ventana de plantillas (mirando
+    // "Populares") mientras esto terminaba de cargar, refrescamos la grilla.
+    if (Panels.templatesOverlayOpen && Panels.overlayState.tab === "popular") {
+      Panels.renderOverlayGrid();
+    }
   },
 
+  /**
+   * Coloca una plantilla (de Imgflip, local, o "Mis plantillas") como
+   * fondo del lienzo actual. Si la imagen viene de un sitio externo
+   * (Imgflip), le pedimos permiso "crossOrigin" al cargarla — así el
+   * lienzo no queda "contaminado" y sigue siendo posible exportar el
+   * meme después sin errores.
+   */
   applyTemplate(template) {
-    const dataUrl = generateTemplateDataURL(template, App.canvas.width, App.canvas.height);
-    const img = new Image();
-    img.onload = () => {
-      App.imageCache[dataUrl] = img;
-      const el = Elements.addImage({ src: dataUrl, width: App.canvas.width, height: App.canvas.height });
+    if (template.isGif) {
+      Panels.applyGifTemplate(template);
+      return;
+    }
+
+    const finishInsert = (src, imgOrCanvas) => {
+      App.imageCache[src] = imgOrCanvas;
+      const el = Elements.addImage({ src, width: App.canvas.width, height: App.canvas.height });
       Elements.sendToBack(el.id);
       App.selectedId = null;
       Render.draw();
       Panels.refreshLayers();
       Panels.refreshProperties();
       History.commit();
+      Panels.closeTemplatesOverlay();
     };
-    img.src = dataUrl;
+
+    const img = new Image();
+    if (template.source === "imgflip" || template.source === "memegen") {
+      img.crossOrigin = "anonymous";
+    }
+    img.onload = () => finishInsert(template.url, img);
+    img.onerror = async () => {
+      // La carga directa con "crossOrigin" falló -normalmente porque el
+      // sitio de origen no autoriza CORS-. Como respaldo, descargamos el
+      // archivo a través de un proxy y lo insertamos como blob: URL, que
+      // no necesita CORS y no deja el lienzo "contaminado" para exportar.
+      if (template.source !== "imgflip" && template.source !== "memegen") {
+        console.warn("No se pudo cargar la plantilla:", template.url);
+        return;
+      }
+      try {
+        Panels.setBusy(true, "La plantilla no cargó directo, probando una vía alterna…");
+        const buffer = await GifEngine.fetchBytes(template.url);
+        const blobUrl = URL.createObjectURL(new Blob([buffer]));
+        const fallbackImg = new Image();
+        fallbackImg.onload = () => {
+          Panels.setBusy(false);
+          finishInsert(blobUrl, fallbackImg);
+        };
+        fallbackImg.onerror = () => {
+          Panels.setBusy(false);
+          console.warn("No se pudo cargar la plantilla ni siquiera por la vía alterna:", template.url);
+          alert("No se pudo cargar esta plantilla. Prueba con otra.");
+        };
+        fallbackImg.src = blobUrl;
+      } catch (err) {
+        Panels.setBusy(false);
+        console.warn("No se pudo cargar la plantilla ni siquiera por la vía alterna:", template.url, err);
+        alert("No se pudo cargar esta plantilla. Prueba con otra.");
+      }
+    };
+    img.src = template.url;
+  },
+
+  /**
+   * Aplica una plantilla GIF animada: la descarga y descompone en
+   * fotogramas (GifEngine, en gifs.js). El primer fotograma se usa
+   * como imagen de fondo normal -así el resto del editor (mover,
+   * redimensionar, capas, etc.) funciona exactamente igual que con
+   * cualquier otra imagen, sin cambios-, y los demás fotogramas
+   * quedan guardados aparte para poder animar el resultado al
+   * exportar como GIF.
+   */
+  async applyGifTemplate(template) {
+    Panels.setBusy(true, "Descargando y preparando el GIF…");
+    try {
+      const { width, height, frames } = await GifEngine.loadFromUrl(template.url);
+      const gifId = "gif_" + Date.now() + "_" + Math.floor(Math.random() * 1000);
+      App.gifCache[gifId] = { width, height, frames };
+
+      const previewSrc = frames[0].canvas.toDataURL("image/png");
+      App.imageCache[previewSrc] = frames[0].canvas;
+
+      const el = Elements.addImage({ src: previewSrc, width: App.canvas.width, height: App.canvas.height });
+      el.animatedGifId = gifId;
+      Elements.sendToBack(el.id);
+      App.selectedId = null;
+      Render.draw();
+      Panels.refreshLayers();
+      Panels.refreshProperties();
+      History.commit();
+      Panels.closeTemplatesOverlay();
+    } catch (err) {
+      console.warn("No se pudo cargar el GIF:", err);
+      alert(
+        "No se pudo cargar este GIF -puede que el sitio de origen no permita usarlo aquí. Prueba con otra plantilla."
+      );
+    } finally {
+      Panels.setBusy(false);
+    }
+  },
+
+  /** Muestra u oculta el overlay de "procesando" (carga/exportación de GIFs). */
+  setBusy(show, message = "") {
+    const overlay = document.getElementById("busy-overlay");
+    if (!overlay) return;
+    overlay.hidden = !show;
+    if (show) document.getElementById("busy-message").textContent = message;
+  },
+
+  /* ---------- Ventana grande de plantillas (vista horizontal, a pantalla completa) ---------- */
+
+  /**
+   * Antes las plantillas vivían apretadas dentro del panel izquierdo,
+   * que es angosto — costaba recorrerlas. Ahora "Plantillas" abre una
+   * ventana que aprovecha todo el ancho de la pantalla, con pestañas
+   * para elegir entre plantillas populares (Imgflip) y las que el
+   * propio usuario guardó ("Mis plantillas"), más un buscador.
+   */
+  setupTemplatesOverlay() {
+    Panels.templatesOverlayOpen = false;
+    Panels.overlayState = { tab: "popular", query: "", page: 1 };
+
+    const grid = document.getElementById("templates-overlay-grid");
+    const pagination = document.getElementById("templates-pagination");
+    const search = document.getElementById("templates-search");
+
+    document.getElementById("btn-open-templates").addEventListener("click", () => Panels.openTemplatesOverlay());
+    document.getElementById("btn-close-templates").addEventListener("click", () => Panels.closeTemplatesOverlay());
+
+    document.querySelectorAll(".templates-tab-btn").forEach((btn) => {
+      btn.addEventListener("click", () => {
+        document.querySelectorAll(".templates-tab-btn").forEach((b) => b.classList.remove("templates-tab-btn--active"));
+        btn.classList.add("templates-tab-btn--active");
+        Panels.overlayState.tab = btn.dataset.tab;
+        Panels.overlayState.page = 1;
+        Panels.renderOverlayGrid();
+      });
+    });
+
+    search.addEventListener("input", () => {
+      Panels.overlayState.query = search.value.trim().toLowerCase();
+      Panels.overlayState.page = 1;
+      Panels.renderOverlayGrid();
+    });
+
+    document.addEventListener("keydown", (e) => {
+      if (e.key === "Escape" && Panels.templatesOverlayOpen) Panels.closeTemplatesOverlay();
+    });
+
+    grid.addEventListener("click", (e) => {
+      // El botón "eliminar" de "Mis plantillas" va anidado dentro de la
+      // tarjeta: hay que resolverlo primero para que no también se
+      // interprete el clic como "aplicar esta plantilla".
+      const delBtn = e.target.closest(".custom-template-delete");
+      if (delBtn) {
+        CustomTemplates.remove(delBtn.dataset.id);
+        Panels.renderOverlayGrid();
+        return;
+      }
+      const item = e.target.closest("[data-template-index]");
+      if (!item) return;
+      const list = Panels.currentOverlayList();
+      const tpl = list[Number(item.dataset.templateIndex)];
+      if (tpl) Panels.applyTemplate(tpl);
+    });
+
+    // Botones "Anterior" / números de página / "Siguiente".
+    pagination.addEventListener("click", (e) => {
+      const btn = e.target.closest("[data-page]");
+      if (!btn || btn.disabled) return;
+      const current = Panels.overlayState.page;
+      if (btn.dataset.page === "prev") Panels.overlayState.page = current - 1;
+      else if (btn.dataset.page === "next") Panels.overlayState.page = current + 1;
+      else Panels.overlayState.page = Number(btn.dataset.page);
+      Panels.renderOverlayGrid();
+      document.getElementById("templates-overlay-body").scrollTop = 0;
+    });
+  },
+
+  openTemplatesOverlay() {
+    Panels.templatesOverlayOpen = true;
+    document.getElementById("templates-overlay").hidden = false;
+    Panels.overlayState.page = 1;
+    Panels.renderOverlayGrid();
+    // Pequeña espera antes de enfocar el buscador, para que en móvil el
+    // teclado no salte en medio de la apertura de la ventana.
+    setTimeout(() => document.getElementById("templates-search").focus(), 50);
+  },
+
+  closeTemplatesOverlay() {
+    Panels.templatesOverlayOpen = false;
+    document.getElementById("templates-overlay").hidden = true;
+  },
+
+  /** Lista de plantillas de la pestaña activa, ya filtrada por el buscador. */
+  currentOverlayList() {
+    const { tab, query } = Panels.overlayState;
+    let list;
+    if (tab === "mine") {
+      list = CustomTemplates.load().map((t) => ({
+        name: t.name,
+        url: t.dataUrl,
+        source: "local",
+        id: t.id,
+        description: t.description,
+      }));
+    } else {
+      list = Panels.onlineTemplates || [];
+    }
+    if (query) {
+      list = list.filter((t) => t.name.toLowerCase().includes(query));
+    }
+    return list;
+  },
+
+  renderOverlayGrid() {
+    const grid = document.getElementById("templates-overlay-grid");
+    const pagination = document.getElementById("templates-pagination");
+    const { tab } = Panels.overlayState;
+    const list = Panels.currentOverlayList();
+
+    if (!Panels.onlineTemplates && tab === "popular") {
+      grid.innerHTML = `<p class="placeholder-note">Cargando plantillas…</p>`;
+      pagination.innerHTML = "";
+      return;
+    }
+
+    if (list.length === 0) {
+      grid.innerHTML =
+        tab === "mine"
+          ? `<p class="placeholder-note">Todavía no guardaste ninguna plantilla propia. Selecciona una imagen en el lienzo y usa "Guardar como plantilla" en Propiedades.</p>`
+          : `<p class="placeholder-note">No se encontraron plantillas con ese nombre.</p>`;
+      pagination.innerHTML = "";
+      return;
+    }
+
+    // Con cientos de plantillas, mostrarlas todas de una vez hacía muy
+    // largo y pesado el scroll. Las dividimos en páginas de tamaño fijo
+    // y agregamos controles para navegar entre ellas.
+    const totalPages = Math.max(1, Math.ceil(list.length / TEMPLATES_PAGE_SIZE));
+    Panels.overlayState.page = Math.min(Math.max(1, Panels.overlayState.page), totalPages);
+    const page = Panels.overlayState.page;
+    const startIdx = (page - 1) * TEMPLATES_PAGE_SIZE;
+    const pageItems = list.slice(startIdx, startIdx + TEMPLATES_PAGE_SIZE);
+
+    let fallbackHint = "";
+    if (tab === "popular" && Panels.onlineTemplatesFallback) {
+      fallbackHint = `<p class="hint templates-fallback-hint">No se pudieron cargar plantillas en línea (¿sin internet?). Mostrando ejemplos locales.</p>`;
+    } else if (tab === "popular" && Panels.onlineTemplatesPartial) {
+      fallbackHint = `<p class="hint templates-fallback-hint">Alguna de las fuentes de plantillas en línea no respondió: se muestran las que sí se pudieron cargar (${list.length}).</p>`;
+    }
+
+    const showingHint =
+      totalPages > 1
+        ? `<p class="hint templates-showing-hint">Mostrando ${startIdx + 1}–${startIdx + pageItems.length} de ${list.length} plantillas</p>`
+        : "";
+
+    // En "Populares" cada tarjeta es un <button> normal. En "Mis
+    // plantillas" es un <div> porque lleva adentro un botón de eliminar
+    // -un <button> no puede contener otro <button> válidamente en HTML.
+    const tag = tab === "mine" ? "div" : "button";
+    const openTag = tag === "button" ? `<button type="button"` : `<div`;
+
+    grid.innerHTML =
+      fallbackHint +
+      showingHint +
+      pageItems
+        .map((t, i) => {
+          const absoluteIndex = startIdx + i;
+          return `
+        ${openTag} class="template-btn" data-template-index="${absoluteIndex}" title="${escapeHtml(t.description || t.name)}">
+          ${t.isGif ? `<span class="template-gif-badge">GIF</span>` : ""}
+          <img src="${t.url}" alt="${escapeHtml(t.name)}" loading="lazy" />
+          <span>${escapeHtml(t.name)}</span>
+          ${tab === "mine" ? `<button type="button" class="custom-template-delete" data-id="${t.id}" title="Eliminar plantilla">🗑️</button>` : ""}
+        </${tag}>`;
+        })
+        .join("");
+
+    pagination.innerHTML = Panels.buildPaginationHTML(page, totalPages);
+  },
+
+  /**
+   * Genera los controles "‹ Anterior · 1 2 3 … N · Siguiente ›". Con
+   * pocas páginas se muestran todos los números; con muchas, solo un
+   * rango alrededor de la página actual (más la primera y la última),
+   * para no llenar la barra de botones.
+   */
+  buildPaginationHTML(page, totalPages) {
+    if (totalPages <= 1) return "";
+
+    const MAX_NUMBERED = 9;
+    let pageNumbers;
+    if (totalPages <= MAX_NUMBERED) {
+      pageNumbers = Array.from({ length: totalPages }, (_, i) => i + 1);
+    } else {
+      const set = new Set([1, totalPages, page - 1, page, page + 1]);
+      pageNumbers = Array.from(set)
+        .filter((p) => p >= 1 && p <= totalPages)
+        .sort((a, b) => a - b);
+    }
+
+    let html = `<button type="button" class="templates-page-btn" data-page="prev" ${page <= 1 ? "disabled" : ""}>‹ Anterior</button>`;
+
+    let previous = 0;
+    for (const p of pageNumbers) {
+      if (previous && p - previous > 1) html += `<span class="templates-page-ellipsis">…</span>`;
+      html += `<button type="button" class="templates-page-btn ${
+        p === page ? "templates-page-btn--active" : ""
+      }" data-page="${p}">${p}</button>`;
+      previous = p;
+    }
+
+    html += `<button type="button" class="templates-page-btn" data-page="next" ${page >= totalPages ? "disabled" : ""}>Siguiente ›</button>`;
+    return html;
   },
 
   /* ---------- Herramienta: fondo ---------- */
@@ -170,17 +623,68 @@ const Panels = {
     });
   },
 
-  applyCanvasSize(w, h) {
+  applyCanvasSize(w, h, { commit = true } = {}) {
     App.canvas.width = w;
     App.canvas.height = h;
     document.getElementById("canvas-size-label").textContent = `${w} × ${h} px`;
+    Panels.syncCanvasSizeSelect(w, h);
     Render.draw();
-    History.commit();
+    if (commit) History.commit();
+  },
+
+  /** Refleja w×h en el selector de tamaño (marca el preset que coincida, o "Personalizado"). */
+  syncCanvasSizeSelect(w, h) {
+    const select = document.getElementById("canvas-size-select");
+    const customRow = document.getElementById("custom-size-row");
+    const value = `${w}x${h}`;
+    const matches = Array.from(select.options).some((o) => o.value === value);
+
+    if (matches) {
+      select.value = value;
+      customRow.hidden = true;
+    } else {
+      select.value = "custom";
+      document.getElementById("custom-width").value = w;
+      document.getElementById("custom-height").value = h;
+      customRow.hidden = false;
+    }
+  },
+
+  /**
+   * Calcula un tamaño de lienzo razonable a partir de las dimensiones
+   * reales de una imagen: respeta su proporción, pero la limita entre
+   * un mínimo y un máximo para que el lienzo no quede ni diminuto ni
+   * gigante (más lento de manejar) en fotos muy chicas o muy grandes.
+   */
+  computeAutoCanvasSize(imgWidth, imgHeight) {
+    const MIN_DIM = 300;
+    const MAX_DIM = 2000;
+    let w = imgWidth;
+    let h = imgHeight;
+
+    if (Math.max(w, h) > MAX_DIM) {
+      const scale = MAX_DIM / Math.max(w, h);
+      w = Math.round(w * scale);
+      h = Math.round(h * scale);
+    }
+    if (Math.min(w, h) < MIN_DIM) {
+      const scale = MIN_DIM / Math.min(w, h);
+      w = Math.round(w * scale);
+      h = Math.round(h * scale);
+    }
+
+    return { width: Math.max(50, w), height: Math.max(50, h) };
   },
 
   /* ---------- Capas ---------- */
 
   refreshLayers() {
+    // Aprovechamos este mismo punto -se llama después de cualquier
+    // cambio en los elementos del lienzo (agregar, borrar, deshacer,
+    // rehacer...)- para mostrar/ocultar la opción "GIF animado" del
+    // exportador, según si hay o no una plantilla GIF en el lienzo.
+    if (window.Exporter) Exporter.updateGifOptionVisibility();
+
     const list = document.getElementById("layers-list");
 
     if (App.elements.length === 0) {
@@ -325,6 +829,17 @@ const Panels = {
 
     if (el.type === "image") {
       html += `<p class="placeholder-note">Arrastra la manija circular para rotar, y la manija cuadrada para escalar.</p>`;
+      if (el.animatedGifId && App.gifCache[el.animatedGifId]) {
+        const frameCount = App.gifCache[el.animatedGifId].frames.length;
+        html += `<p class="hint">🎬 Esta imagen es un GIF animado (${frameCount} fotogramas). Se ve fija mientras editas, pero puedes exportar el resultado ya animado eligiendo "GIF animado" en Exportar.</p>`;
+      }
+      html += `<div class="save-template-box">
+        <p class="panel-title save-template-title">Guardar como plantilla propia</p>
+        ${row("Nombre", `<input type="text" id="template-name-input" placeholder="Ej. Mi foto de perfil" />`)}
+        ${row("Descripción (opcional)", `<input type="text" id="template-desc-input" placeholder="Ej. Para reacciones" />`)}
+        <button type="button" class="preset-btn" id="btn-save-as-template">💾 Guardar como plantilla</button>
+        <p class="hint" id="save-template-status"></p>
+      </div>`;
     }
 
     // Comunes a todos los tipos
@@ -345,6 +860,50 @@ const Panels = {
     </div>`;
 
     return html;
+  },
+
+  /**
+   * Guarda la imagen actualmente seleccionada como una "plantilla
+   * propia" en este navegador (localStorage), con nombre y
+   * descripción. La volvemos a codificar como una imagen propia
+   * (no una referencia externa) para que quede disponible sin
+   * internet y nunca tenga problemas al exportar.
+   */
+  handleSaveAsTemplate() {
+    const el = Elements.find(App.selectedId);
+    const statusEl = document.getElementById("save-template-status");
+    if (!el || el.type !== "image" || !statusEl) return;
+
+    const nameInput = document.getElementById("template-name-input");
+    const descInput = document.getElementById("template-desc-input");
+    const name = nameInput.value.trim();
+
+    if (!name) {
+      statusEl.textContent = "Ponle un nombre a la plantilla antes de guardar.";
+      return;
+    }
+
+    const img = App.imageCache[el.src];
+    if (!img) {
+      statusEl.textContent = "No se pudo leer esta imagen todavía, intenta de nuevo en un momento.";
+      return;
+    }
+
+    try {
+      const dataUrl = CustomTemplates.resizeToDataUrl(img, 500);
+      const saved = CustomTemplates.add({ name, description: descInput.value.trim(), dataUrl });
+      if (saved) {
+        statusEl.textContent = "¡Guardada! Ya aparece en \"Mis plantillas\" dentro de la ventana de Plantillas.";
+        nameInput.value = "";
+        descInput.value = "";
+        if (Panels.templatesOverlayOpen) Panels.renderOverlayGrid();
+      } else {
+        statusEl.textContent = "No se pudo guardar (puede que no quede espacio en el navegador).";
+      }
+    } catch (err) {
+      console.warn("No se pudo guardar como plantilla:", err);
+      statusEl.textContent = "Esta imagen viene de un sitio externo que no permite guardarla localmente.";
+    }
   },
 
   setupPropertiesDelegation() {
@@ -382,6 +941,11 @@ const Panels = {
     });
 
     container.addEventListener("click", (e) => {
+      if (e.target.id === "btn-save-as-template") {
+        Panels.handleSaveAsTemplate();
+        return;
+      }
+
       const presetBtn = e.target.closest("[data-preset]");
       if (presetBtn) {
         const el = Elements.find(App.selectedId);
