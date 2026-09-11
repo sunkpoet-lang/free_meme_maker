@@ -1417,10 +1417,11 @@ button { font-family: inherit; }
     display: contents;
   }
 
-  #btn-quick-add-text { order: 1; }
-  #btn-quick-templates { order: 2; }
-  #btn-quick-create-sticker { order: 3; }
-  #btn-quick-export { order: 4; }
+  #btn-quick-upload-image { order: 1; }
+  #btn-quick-add-text { order: 2; }
+  #btn-quick-templates { order: 3; }
+  #btn-quick-create-sticker { order: 4; }
+  #btn-quick-export { order: 5; }
 
   .canvas-toolbar {
     order: 5;

@@ -90,6 +90,14 @@ const Panels = {
     const btn = document.getElementById("btn-upload-image");
     const input = document.getElementById("file-input");
     btn.addEventListener("click", () => input.click());
+
+    // Atajo del lienzo (ver index.html, junto a "Agregar texto"): abre
+    // el mismo selector de archivos -que en el celular es la galería
+    // de fotos-, para no tener que ir hasta "Herramientas" solo para
+    // subir la primera imagen del meme.
+    const quickBtn = document.getElementById("btn-quick-upload-image");
+    if (quickBtn) quickBtn.addEventListener("click", () => input.click());
+
     input.addEventListener("change", () => {
       if (input.files && input.files[0]) {
         Interactions.loadImageFile(input.files[0]);
