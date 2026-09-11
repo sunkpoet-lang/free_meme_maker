@@ -249,3 +249,83 @@ html[data-theme="win95"] .brand-logo,
 html[data-theme="win95"] .canvas-empty-logo {
   content: url("../assets/WIN95.png");
 }
+
+/* ---------- Consola de MS-DOS (panel de capas) ----------
+   Fija en el panel derecho, junto a "Capas". Se queda mostrando el
+   prompt en reposo y "cobra vida" -tecleando sola, ver js/win95-dos.js-
+   cada vez que se descarga un meme, o mientras dure un proceso largo
+   (como exportar un GIF animado). */
+
+html[data-theme="win95"] .tool-section--win95-dos {
+  display: block;
+  padding-bottom: 16px;
+}
+
+html[data-theme="win95"] .win95-dos-window {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  box-shadow: var(--bevel-out);
+  transform-origin: top;
+}
+
+/* Efecto de "ventanita que se abre", como una consola de MS-DOS que
+   acaba de arrancar: se dispara con la clase .win95-dos-window--opening
+   (js/win95-dos.js la agrega justo antes de empezar a escribir). */
+html[data-theme="win95"] .win95-dos-window--opening {
+  animation: win95-dos-open 0.32s ease-out;
+}
+
+@keyframes win95-dos-open {
+  0% { transform: scaleY(0.05); opacity: 0.2; }
+  55% { transform: scaleY(1.04); opacity: 1; }
+  100% { transform: scaleY(1); opacity: 1; }
+}
+
+html[data-theme="win95"] .win95-dos-titlebar {
+  background: linear-gradient(90deg, #000080 0%, #1084d0 100%);
+  color: #ffffff;
+  font-family: var(--font-ui);
+  font-weight: 700;
+  font-size: 11px;
+  padding: 3px 6px;
+}
+
+html[data-theme="win95"] .win95-dos-body {
+  position: relative;
+  background: #000000;
+  color: #c0c0c0;
+  font-family: "Consolas", "Courier New", monospace;
+  font-size: 10px;
+  line-height: 1.5;
+  padding: 8px 8px;
+  height: 150px;
+  overflow: hidden;
+  white-space: pre-wrap;
+  word-break: break-all;
+}
+
+html[data-theme="win95"] .win95-dos-line--prompt {
+  color: #ffffff;
+}
+
+html[data-theme="win95"] .win95-dos-line--highlight {
+  color: #ffff55;
+  font-weight: 700;
+}
+
+html[data-theme="win95"] .win95-dos-ok {
+  color: #55ff55;
+  font-weight: 700;
+}
+
+html[data-theme="win95"] .win95-dos-cursor {
+  display: inline-block;
+  color: #c0c0c0;
+  animation: win95-dos-blink 1s steps(1, jump-none) infinite;
+}
+
+@keyframes win95-dos-blink {
+  0%, 49% { opacity: 1; }
+  50%, 100% { opacity: 0; }
+}

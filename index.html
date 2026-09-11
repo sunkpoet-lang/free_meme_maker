@@ -195,6 +195,20 @@
         <div id="layers-list" class="layers-list"></div>
       </section>
 
+      <!-- Consola de MS-DOS: solo se ve con el tema Windows 95 (ver
+           css/themes.css); se queda fija en el panel de capas y "cobra
+           vida" cada vez que se descarga un meme (ver js/win95-dos.js). -->
+      <section class="tool-section tool-section--win95-dos">
+        <div class="win95-dos-window" id="win95-dos-window">
+          <div class="win95-dos-titlebar">
+            <span class="win95-dos-title">C:\MEMES\CREAR.BAT</span>
+          </div>
+          <div class="win95-dos-body">
+            <div id="dos-output"></div><span class="win95-dos-cursor">█</span>
+          </div>
+        </div>
+      </section>
+
       <section class="tool-section">
         <h2 class="panel-title">Propiedades</h2>
         <div id="properties-container"></div>
@@ -300,6 +314,7 @@
   <script src="js/panels.js"></script>
   <script src="js/export.js"></script>
   <script src="js/win95-sounds.js"></script>
+  <script src="js/win95-dos.js"></script>
   <script src="js/app.js"></script>
   <script>
     (function () {

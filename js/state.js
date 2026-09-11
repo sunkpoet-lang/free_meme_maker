@@ -32,6 +32,10 @@ const App = {
     mode: null,           // "move" | "resize" | "rotate" | null
     pointerStart: { x: 0, y: 0 },
     elementStart: null,    // copia del elemento al iniciar el arrastre
+    // Guías de alineación activas mientras se arrastra (ver
+    // Interactions.computeSnap en interactions.js y
+    // Render.drawAlignmentGuides en render.js). null = sin guía en ese eje.
+    guides: { x: null, y: null },
   },
 };
 

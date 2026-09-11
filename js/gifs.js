@@ -177,12 +177,17 @@ const GifEngine = {
     video.src = objectUrl;
 
     try {
-      await new Promise((resolve, reject) => {
-        video.onloadedmetadata = () => resolve();
-        video.onerror = () => reject(new Error("No se pudo leer el video. Prueba con otro archivo."));
-      });
+      await GifEngine.waitForVideoEvent(video, "loadedmetadata", 15000);
 
-      const rawDuration = video.duration;
+      // Bug conocido de Chrome (y otros navegadores) con ciertos
+      // archivos -sobre todo videos grabados con el celular-: la
+      // duración llega como "Infinity" hasta que se busca cerca del
+      // final. Si pasa, forzamos ese truco antes de seguir.
+      let rawDuration = video.duration;
+      if (!Number.isFinite(rawDuration) || rawDuration <= 0) {
+        rawDuration = await GifEngine.resolveInfiniteDuration(video);
+      }
+
       const duration = Math.min(
         Number.isFinite(rawDuration) && rawDuration > 0 ? rawDuration : maxDurationSec,
         maxDurationSec
@@ -207,9 +212,23 @@ const GifEngine = {
       const drawCtx = drawCanvas.getContext("2d");
 
       const frames = [];
+      let consecutiveSeekTimeouts = 0;
       for (let i = 0; i < frameCount; i++) {
         const t = Math.min(Math.max(duration - 0.02, 0), i / fps);
-        await GifEngine.seekVideoTo(video, t);
+        const seeked = await GifEngine.seekVideoTo(video, t);
+
+        if (!seeked) {
+          consecutiveSeekTimeouts += 1;
+          // Si el navegador no avisa NUNCA que terminó de buscar (pasa
+          // con algunos archivos raros), no tiene sentido esperar el
+          // mismo tiempo perdido en cada uno de los fotogramas que
+          // faltan -mejor avisar de una vez con un error claro-.
+          if (consecutiveSeekTimeouts >= 3) {
+            throw new Error("El navegador no pudo leer los fotogramas de este video. Prueba con otro formato (.mp4 o .webm) u otro navegador.");
+          }
+        } else {
+          consecutiveSeekTimeouts = 0;
+        }
 
         drawCtx.drawImage(video, 0, 0, width, height);
         const frameCanvas = document.createElement("canvas");
@@ -219,19 +238,96 @@ const GifEngine = {
         frames.push({ canvas: frameCanvas, delay });
       }
 
+      if (!frames.length) throw new Error("No se pudo extraer ningún fotograma del video.");
+
       return { width, height, frames };
     } finally {
       URL.revokeObjectURL(objectUrl);
     }
   },
 
-  /** Mueve la cabeza de reproducción de un <video> a un momento exacto y espera a que el fotograma esté listo. */
+  /**
+   * Espera a que un <video> dispare cierto evento, con límite de tiempo:
+   * si el navegador nunca lo dispara (pasa con algunos archivos raros),
+   * esto falla con un error claro en vez de dejar la conversión colgada
+   * para siempre.
+   */
+  waitForVideoEvent(video, eventName, timeoutMs) {
+    return new Promise((resolve, reject) => {
+      let done = false;
+      const finish = (fn) => {
+        if (done) return;
+        done = true;
+        video.removeEventListener(eventName, onEvent);
+        video.removeEventListener("error", onError);
+        clearTimeout(timer);
+        fn();
+      };
+      const onEvent = () => finish(resolve);
+      const onError = () => finish(() => reject(new Error("No se pudo leer el video. Prueba con otro archivo.")));
+      const timer = setTimeout(
+        () => finish(() => reject(new Error("El video tardó demasiado en cargar. Prueba con un archivo más pequeño."))),
+        timeoutMs
+      );
+      video.addEventListener(eventName, onEvent);
+      video.addEventListener("error", onError);
+    });
+  },
+
+  /**
+   * Truco para el bug de "duration: Infinity" en ciertos archivos
+   * (común en videos grabados con el celular, en Chrome y otros
+   * navegadores): buscar un tiempo enorme obliga al navegador a
+   * calcular la duración real, que aparece en el evento
+   * "durationchange". Si no se resuelve en unos segundos, seguimos
+   * de todas formas (el llamador ya tiene un valor de respaldo).
+   */
+  resolveInfiniteDuration(video) {
+    return new Promise((resolve) => {
+      let done = false;
+      const finish = (value) => {
+        if (done) return;
+        done = true;
+        video.removeEventListener("durationchange", onDurationChange);
+        clearTimeout(timer);
+        video.currentTime = 0;
+        resolve(value);
+      };
+      const onDurationChange = () => {
+        if (Number.isFinite(video.duration) && video.duration > 0) finish(video.duration);
+      };
+      const timer = setTimeout(() => finish(NaN), 3000);
+      video.addEventListener("durationchange", onDurationChange);
+      try {
+        video.currentTime = 1e101;
+      } catch (err) {
+        finish(NaN);
+      }
+    });
+  },
+
+  /**
+   * Mueve la cabeza de reproducción de un <video> a un momento exacto y
+   * espera a que el fotograma esté listo (con límite de tiempo: si el
+   * navegador no dispara "seeked" -pasa con algunos archivos-, seguimos
+   * con el fotograma que haya en vez de colgarnos para siempre).
+   * Devuelve true si "seeked" sí se disparó a tiempo, o false si se
+   * agotó el límite -así quien llama puede decidir rendirse antes si
+   * pasa varias veces seguidas, en vez de perder el mismo tiempo en
+   * cada uno de los fotogramas que faltan-.
+   */
   seekVideoTo(video, time) {
     return new Promise((resolve) => {
-      const onSeeked = () => {
+      let done = false;
+      const finish = (seeked) => {
+        if (done) return;
+        done = true;
         video.removeEventListener("seeked", onSeeked);
-        resolve();
+        clearTimeout(timer);
+        resolve(seeked);
       };
+      const onSeeked = () => finish(true);
+      const timer = setTimeout(() => finish(false), 800);
       video.addEventListener("seeked", onSeeked);
       video.currentTime = time;
     });

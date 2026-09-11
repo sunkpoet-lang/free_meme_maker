@@ -1181,6 +1181,12 @@ button { font-family: inherit; }
   font-weight: 700;
 }
 
+/* Consola de MS-DOS del panel de capas: oculta salvo en el tema
+   Windows 95 (ver css/themes.css). */
+.tool-section--win95-dos {
+  display: none;
+}
+
 .template-gif-badge {
   position: absolute;
   top: 4px;
@@ -1197,15 +1203,67 @@ button { font-family: inherit; }
 }
 
 @media (max-width: 960px) {
+  /* En escritorio la app ocupa exactamente la pantalla y cada columna
+     (herramientas / lienzo / capas) se desplaza por su cuenta, dentro
+     de su propia cajita. En el celular eso se sentía "encimado": la
+     barra de "ir a sección" (que se pega arriba usando un truco de
+     posición negativa) quedaba recortada por la esquina redondeada de
+     una cajita de apenas 260px de alto, y había que adivinar cuál de
+     varias cajitas chiquitas arrastrar con el dedo. Acá se convierte
+     todo en una página normal que se desplaza de un solo tirón, como
+     cualquier sitio -mucho más fácil de recorrer con el dedo-. */
+  html, body {
+    height: auto;
+    min-height: 100%;
+  }
+
   .app-layout {
     grid-template-columns: 1fr;
     grid-auto-rows: auto;
+    height: auto;
   }
+
+  /* Primero el LIENZO (con sus botones rápidos de "Agregar texto",
+     "Explorar plantillas", "Crear sticker" arriba, y "Descargar meme"
+     abajo): así, apenas se abre la página en el celular, ya se ve que
+     cargó y está lista para usarse, sin tener que bajar toda la lista
+     de herramientas primero. Después la caja de herramientas, y al
+     final capas/propiedades/exportar (solo hacen falta una vez ya hay
+     algo en el lienzo). El orden en el HTML no cambia -esto es nada
+     más el orden en el que se VEN-. */
+  .canvas-area { order: 1; }
+  .panel-left { order: 2; }
+  .panel-right { order: 3; }
+
+  /* Cada panel deja de tener su propio scroll interno recortado por
+     esquinas redondeadas: ahora crece lo que haga falta y es la
+     PÁGINA la que se desplaza. */
   .panel-left,
-  .panel-right { max-height: 260px; }
+  .panel-right {
+    max-height: none;
+    overflow: visible;
+  }
+
+  /* La barra de "ir a sección" ya no necesita el truco de offset
+     negativo (que era, justo, lo que se recortaba) porque ya no vive
+     dentro de una cajita con scroll propio: ahora se pega arriba de
+     la PANTALLA mientras se recorre el panel de herramientas. */
+  .panel-quicknav {
+    top: 0;
+    margin: 0 0 14px 0;
+    padding: 10px 0;
+  }
+
   .app-header { flex-direction: column; align-items: flex-start; }
   .brand-logo { width: 48px; height: 48px; }
   .app-title { font-size: 24px; }
+
+  /* El lienzo no necesita ocupar casi toda la altura de la pantalla
+     de entrada -así se alcanzan a ver los botones rápidos de arriba y
+     abajo sin tener que desplazarse primero-. */
+  .canvas-stage { max-height: 55vh; }
+  #meme-canvas { max-height: 50vh; }
+
   .templates-overlay-header { padding: 12px 14px; }
   .templates-overlay-body { padding: 14px; }
   .templates-overlay-grid {

@@ -77,9 +77,15 @@ const Interactions = {
     const dx = x - pointerStart.x;
     const dy = y - pointerStart.y;
 
+    // Las guías de alineación solo aplican al mover (no al rotar/redimensionar);
+    // se recalculan en cada movimiento y se borran si no aplica ninguna.
+    App.dragState.guides = { x: null, y: null };
+
     if (mode === "move") {
-      el.x = elementStart.x + dx;
-      el.y = elementStart.y + dy;
+      const snapped = Interactions.computeSnap(el, elementStart.x + dx, elementStart.y + dy);
+      el.x = snapped.x;
+      el.y = snapped.y;
+      App.dragState.guides = snapped.guides;
     } else if (mode === "rotate") {
       const angleRad = Math.atan2(y - el.y, x - el.x);
       el.rotation = (angleRad * 180) / Math.PI + 90;
@@ -103,9 +109,95 @@ const Interactions = {
     if (App.dragState.mode) {
       App.dragState.mode = null;
       App.dragState.elementStart = null;
+      App.dragState.guides = { x: null, y: null };
+      Render.draw();
       History.commit();
       Panels.refreshProperties();
     }
+  },
+
+  /** Distancia máxima (en píxeles de PANTALLA, no del lienzo) para que un
+   *  borde/centro "se pegue" a una guía -como el imán de alineación de
+   *  CapCut-. Se convierte a píxeles del lienzo según el zoom actual. */
+  SNAP_THRESHOLD_SCREEN_PX: 8,
+
+  /**
+   * Calcula, para un elemento que se está moviendo hacia (proposedX,
+   * proposedY), si el borde izquierdo/centro/derecho (y arriba/centro/
+   * abajo) queda lo bastante cerca de: el centro del lienzo, los bordes
+   * del lienzo, o el borde/centro de cualquier otro elemento -y, de ser
+   * así, "engancha" esa posición exacta en vez de la propuesta-.
+   *
+   * Devuelve { x, y, guides: { x, y } }: x/y son las coordenadas finales
+   * (ya ajustadas), y guides.x/guides.y son la posición (en el eje
+   * correspondiente) de la línea guía a dibujar, o null si no hay
+   * ninguna guía activa en ese eje.
+   */
+  computeSnap(el, proposedX, proposedY) {
+    const canvas = App.canvas;
+    const rect = canvas.getBoundingClientRect();
+    // Si el lienzo se ve más chico/grande en pantalla que su tamaño real
+    // (por ejemplo, un lienzo de 1080px mostrado en 400px de ancho), el
+    // umbral de "8px de pantalla" hay que traducirlo a píxeles del lienzo.
+    const scaleX = rect.width > 0 ? canvas.width / rect.width : 1;
+    const scaleY = rect.height > 0 ? canvas.height / rect.height : 1;
+    const thresholdX = Interactions.SNAP_THRESHOLD_SCREEN_PX * scaleX;
+    const thresholdY = Interactions.SNAP_THRESHOLD_SCREEN_PX * scaleY;
+
+    const box = Render.getBoundingBox(el);
+    const halfW = box.width / 2;
+    const halfH = box.height / 2;
+
+    // Candidatos a los que "engancharse": el centro y los bordes del
+    // lienzo, más el centro y los bordes de cada otro elemento.
+    const targetsX = [0, canvas.width / 2, canvas.width];
+    const targetsY = [0, canvas.height / 2, canvas.height];
+    for (const other of App.elements) {
+      if (other.id === el.id) continue;
+      const obox = Render.getBoundingBox(other);
+      targetsX.push(other.x - obox.width / 2, other.x, other.x + obox.width / 2);
+      targetsY.push(other.y - obox.height / 2, other.y, other.y + obox.height / 2);
+    }
+
+    // Los tres "bordes" del elemento que se mueve: izquierda, centro y
+    // derecha (y arriba/centro/abajo). "offset" es su distancia al
+    // centro del elemento, para poder recalcular x/y a partir de dónde
+    // terminó enganchando ese borde en particular.
+    const edgesX = [
+      { offset: -halfW, pos: proposedX - halfW },
+      { offset: 0, pos: proposedX },
+      { offset: halfW, pos: proposedX + halfW },
+    ];
+    const edgesY = [
+      { offset: -halfH, pos: proposedY - halfH },
+      { offset: 0, pos: proposedY },
+      { offset: halfH, pos: proposedY + halfH },
+    ];
+
+    const bestOnAxis = (edges, targets, threshold) => {
+      let best = null;
+      for (const edge of edges) {
+        for (const target of targets) {
+          const dist = Math.abs(edge.pos - target);
+          if (dist <= threshold && (!best || dist < best.dist)) {
+            best = { dist, value: target - edge.offset, guideValue: target };
+          }
+        }
+      }
+      return best;
+    };
+
+    const bestX = bestOnAxis(edgesX, targetsX, thresholdX);
+    const bestY = bestOnAxis(edgesY, targetsY, thresholdY);
+
+    return {
+      x: bestX ? bestX.value : proposedX,
+      y: bestY ? bestY.value : proposedY,
+      guides: {
+        x: bestX ? bestX.guideValue : null,
+        y: bestY ? bestY.guideValue : null,
+      },
+    };
   },
 
   isEditingText() {

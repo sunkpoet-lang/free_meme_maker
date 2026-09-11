@@ -38,6 +38,14 @@ const Render = {
       const el = Elements.find(App.selectedId);
       if (el) Render.drawSelectionUI(el);
     }
+
+    // Guías de alineación (estilo CapCut): solo mientras se arrastra un
+    // elemento y "engancha" con el centro/bordes del lienzo o con otro
+    // elemento (ver Interactions.computeSnap). Se dibujan al final, por
+    // encima de todo, y nunca en la exportación (showSelection = false).
+    if (showSelection && App.dragState.mode === "move" && App.dragState.guides) {
+      Render.drawAlignmentGuides(App.dragState.guides);
+    }
   },
 
   syncEmptyOverlay() {
@@ -299,6 +307,41 @@ const Render = {
 
     // Manija de redimensionar (cuadrado en la esquina inferior derecha)
     Render.drawHandle(box.width / 2, box.height / 2, "square");
+
+    ctx.restore();
+  },
+
+  /**
+   * Dibuja las líneas guía de alineación: una vertical en guides.x y/o
+   * una horizontal en guides.y, cruzando todo el lienzo -igual que las
+   * líneas magenta que aparecen en CapCut al arrastrar un clip y quedar
+   * centrado o alineado con otro-. Cualquiera de los dos puede faltar
+   * (null), si en ese eje no hay ningún enganche activo.
+   */
+  drawAlignmentGuides(guides) {
+    const { ctx, canvas } = App;
+    if (guides.x === null && guides.y === null) return;
+
+    ctx.save();
+    ctx.strokeStyle = "#ff2ec4";
+    ctx.lineWidth = Math.max(1.5, Math.round(Math.min(canvas.width, canvas.height) * 0.0022));
+    ctx.setLineDash([]);
+    ctx.shadowColor = "rgba(255, 46, 196, 0.65)";
+    ctx.shadowBlur = Math.max(3, Math.round(Math.min(canvas.width, canvas.height) * 0.006));
+
+    if (guides.x !== null) {
+      ctx.beginPath();
+      ctx.moveTo(guides.x, 0);
+      ctx.lineTo(guides.x, canvas.height);
+      ctx.stroke();
+    }
+
+    if (guides.y !== null) {
+      ctx.beginPath();
+      ctx.moveTo(0, guides.y);
+      ctx.lineTo(canvas.width, guides.y);
+      ctx.stroke();
+    }
 
     ctx.restore();
   },
