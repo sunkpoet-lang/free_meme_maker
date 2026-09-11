@@ -1323,9 +1323,69 @@ button { font-family: inherit; }
     padding: 10px 0;
   }
 
-  .app-header { flex-direction: column; align-items: flex-start; }
-  .brand-logo { width: 48px; height: 48px; }
-  .app-title { font-size: 24px; }
+  /* ---------- Encabezado compacto ----------
+     Antes, en celular, cada pieza del header (título, contador,
+     temas, interruptor de sonido de Windows 95, botones de
+     deshacer/rehacer/etc.) quedaba en SU PROPIA fila completa
+     (flex-direction: column), una abajo de la otra: todo junto y
+     grande, ocupaba tanto que tapaba el lienzo. Ahora vuelve a ser
+     una fila que ENVUELVE (como en escritorio), pero angosta: el
+     título ocupa su propia línea arriba, y el resto (contador, temas,
+     "Instalar app", deshacer/rehacer/duplicar/eliminar) se acomoda
+     junto, chico, en las líneas de abajo -ocupando solo el ancho que
+     necesita cada pieza, no la pantalla completa-. */
+  .app-header {
+    flex-direction: row;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 6px 8px;
+    padding: 8px 12px;
+    padding-top: calc(8px + env(safe-area-inset-top, 0px));
+  }
+
+  .app-header-titles { flex: 1 1 100%; gap: 8px; }
+  .brand-logo { width: 30px; height: 30px; }
+  .app-title { font-size: 16px; letter-spacing: 0.5px; }
+
+  /* El subtítulo ("Free Meme Maker · 100% gratis · sin watermark") no
+     aporta nada que el usuario necesite ver seguido: en celular se
+     quita para no gastar una línea entera. */
+  .app-subtitle { display: none; }
+
+  .app-toolbar { flex: 1 1 100%; }
+
+  /* Contador, selector de tema, interruptor de sonido de Windows 95 y
+     "Instalar app" -más chicos, para que entren varios por línea en
+     vez de uno por fila-. */
+  .meme-counter { padding: 4px 10px; gap: 5px; }
+  .meme-counter-icon { font-size: 13px; }
+  .meme-counter-text { font-size: 11px; }
+  #meme-counter-value { font-size: 12px; }
+
+  .theme-switcher { padding: 3px; gap: 4px; }
+  .theme-switcher .theme-btn,
+  .theme-btn {
+    width: 30px;
+    height: 30px;
+    font-size: 13px;
+    border-radius: 8px;
+  }
+
+  #btn-install-pwa.btn-install-pwa {
+    height: 30px;
+    padding: 0 10px;
+    font-size: 11px;
+    gap: 4px;
+  }
+
+  /* Deshacer / Rehacer / Duplicar / Eliminar: más delgados, y en su
+     propio ancho -no ya cuadrados enormes de 44px mínimo-. */
+  .app-toolbar { gap: 5px; padding: 5px 6px; }
+  .app-toolbar button {
+    padding: 5px 9px;
+    font-size: 10.5px;
+    min-height: 0;
+  }
 
   /* ---------- Botones rápidos: agrupados y compactos arriba del lienzo ----------
      Antes, "Agregar texto"/"Explorar plantillas"/"Crear sticker" (arriba)
@@ -1505,11 +1565,7 @@ button { font-family: inherit; }
     min-height: 44px;
   }
 
-  .theme-btn { width: 40px; height: 40px; }
-
-  /* Respeta la muesca/notch de arriba cuando la app corre instalada
-     (PWA) en pantalla completa. */
-  .app-header {
-    padding-top: calc(12px + env(safe-area-inset-top, 0px));
-  }
+  /* El tamaño de .theme-btn (más chico, ver "Encabezado compacto" más
+     arriba) y el padding-top de .app-header que respeta el notch ya
+     quedaron definidos ahí -no se repiten acá para no pisarse-. */
 }
