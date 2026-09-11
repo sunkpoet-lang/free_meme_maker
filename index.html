@@ -158,6 +158,11 @@
     <main class="canvas-area">
       <div class="canvas-quick-actions">
         <button type="button" id="btn-quick-upload-image" class="primary-btn primary-btn--quick">📷 Subir imagen</button>
+        <!-- En el celular no existe Ctrl+V: este botón usa la API del
+             portapapeles para pegar una imagen copiada desde otra app
+             (ver Interactions.pasteImageFromClipboard en interactions.js).
+             Si el navegador no la soporta, se oculta solo. -->
+        <button type="button" id="btn-quick-paste-image" class="primary-btn primary-btn--quick" hidden>📋 Pegar imagen</button>
         <button type="button" id="btn-quick-add-text" class="primary-btn primary-btn--quick">📝 Agregar texto</button>
         <button type="button" id="btn-quick-templates" class="primary-btn primary-btn--quick">🖼️ Explorar plantillas</button>
         <button type="button" id="btn-quick-create-sticker" class="primary-btn primary-btn--quick">🎨 Crear sticker</button>
@@ -172,7 +177,8 @@
           <div class="canvas-empty" id="canvas-empty">
             <img class="canvas-empty-logo" src="assets/logo.png" alt="" />
             <p class="canvas-empty-title">Arrastra una imagen aquí</p>
-            <p class="canvas-empty-sub">o pégala con Ctrl+V, o usa las herramientas de la izquierda</p>
+            <p class="canvas-empty-sub canvas-empty-sub--desktop">o pégala con Ctrl+V, o usa las herramientas de la izquierda</p>
+            <p class="canvas-empty-sub canvas-empty-sub--mobile">o usa los botones "Subir imagen" / "Pegar imagen" de arriba</p>
           </div>
         </div>
       </div>

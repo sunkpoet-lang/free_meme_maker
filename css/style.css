@@ -907,6 +907,14 @@ button { font-family: inherit; }
   line-height: 1.35;
 }
 
+/* Dos variantes del texto de ayuda: en escritorio hablamos de Ctrl+V
+   y del panel izquierdo; en celular esos dos conceptos no existen
+   (no hay teclado físico ni panel lateral, sino botones arriba y
+   pestañas abajo), así que mostramos un texto distinto. */
+.canvas-empty-sub--mobile {
+  display: none;
+}
+
 #meme-canvas {
   background: #000;
   border-radius: 8px;
@@ -1418,20 +1426,24 @@ button { font-family: inherit; }
   }
 
   #btn-quick-upload-image { order: 1; }
-  #btn-quick-add-text { order: 2; }
-  #btn-quick-templates { order: 3; }
-  #btn-quick-create-sticker { order: 4; }
-  #btn-quick-export { order: 5; }
+  #btn-quick-paste-image { order: 2; }
+  #btn-quick-add-text { order: 3; }
+  #btn-quick-templates { order: 4; }
+  #btn-quick-create-sticker { order: 5; }
+  #btn-quick-export { order: 6; }
+
+  .canvas-empty-sub--desktop { display: none; }
+  .canvas-empty-sub--mobile { display: block; }
 
   .canvas-toolbar {
-    order: 5;
+    order: 7;
     flex: 1 1 100%;
     padding: 0 0 4px 0;
     font-size: 15px;
   }
 
   .canvas-wrapper {
-    order: 6;
+    order: 8;
     flex: 1 1 100%;
   }
 

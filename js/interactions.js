@@ -22,6 +22,52 @@ const Interactions = {
     document.addEventListener("paste", Interactions.onPaste);
 
     Interactions.setupDragAndDrop();
+    Interactions.setupPasteButton();
+  },
+
+  /**
+   * Botón "Pegar imagen" del lienzo: en el celular no hay Ctrl+V (no
+   * existe ese evento sin teclado físico), así que esta es la forma
+   * de pegar una imagen copiada en otra app -por ejemplo, mantener
+   * presionada una foto en la galería o en un chat y elegir "Copiar
+   * imagen"-. Usa la API del portapapeles (navigator.clipboard.read),
+   * que si soportada, requiere que el botón se toque directamente
+   * -no se puede disparar sola- y que el sitio esté en https.
+   *
+   * El botón arranca oculto en el HTML y solo se muestra si el
+   * navegador realmente soporta esta API -si no, no tendría sentido
+   * mostrar un botón que siempre va a fallar-.
+   */
+  setupPasteButton() {
+    const btn = document.getElementById("btn-quick-paste-image");
+    if (!btn) return;
+
+    if (navigator.clipboard && typeof navigator.clipboard.read === "function") {
+      btn.hidden = false;
+      btn.addEventListener("click", () => Interactions.pasteImageFromClipboard());
+    }
+  },
+
+  async pasteImageFromClipboard() {
+    try {
+      const clipboardItems = await navigator.clipboard.read();
+      for (const item of clipboardItems) {
+        const imageType = item.types.find((t) => t.startsWith("image/"));
+        if (imageType) {
+          const blob = await item.getType(imageType);
+          Interactions.loadImageFile(blob);
+          return;
+        }
+      }
+      alert(
+        'No encontramos ninguna imagen copiada. Primero copiá una imagen en otra app (por ejemplo, mantené presionada una foto y elegí "Copiar imagen") y volvé a tocar "Pegar imagen".'
+      );
+    } catch (err) {
+      console.warn("No se pudo leer el portapapeles:", err);
+      alert(
+        'No se pudo acceder al portapapeles. Si tu navegador pidió permiso, revisá que lo hayas aceptado y volvé a intentar -o usá "Subir imagen" en su lugar-.'
+      );
+    }
   },
 
   /** Convierte coordenadas del mouse/dedo (en pantalla) a coordenadas del canvas. */
