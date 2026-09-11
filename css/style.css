@@ -1327,11 +1327,69 @@ button { font-family: inherit; }
   .brand-logo { width: 48px; height: 48px; }
   .app-title { font-size: 24px; }
 
+  /* ---------- Botones rápidos: agrupados y compactos arriba del lienzo ----------
+     Antes, "Agregar texto"/"Explorar plantillas"/"Crear sticker" (arriba)
+     y "Descargar meme" (abajo, aparte, con letra enorme) eran 4 botones
+     de ancho completo, uno debajo del otro: entre eso y el encabezado,
+     el lienzo quedaba tapado y había que bajar para verlo. Ahora los 4
+     forman una sola cuadrícula de 2×2, chica, justo arriba del lienzo
+     -"Descargar meme" incluido, aunque en el HTML sigue estando
+     después del lienzo-.
+
+     Truco: ".canvas-quick-actions" y ".canvas-quick-actions--bottom"
+     (los dos contenedores que hoy separan esos botones) pasan a
+     "display: contents", así "desaparecen" y sus botones quedan como
+     hijos directos de ".canvas-area" -que ahora arma una fila que
+     ENVUELVE (flex-wrap)-. Cada botón, y también la etiqueta de
+     tamaño y el lienzo, llevan su propio "order" para que el orden
+     visual final sea: los 4 botones (2 por fila) y recién después la
+     etiqueta y el lienzo, cada uno ocupando su propia fila completa. */
+  .canvas-area {
+    display: flex;
+    flex-direction: row;
+    flex-wrap: wrap;
+    align-content: flex-start;
+    gap: 8px;
+  }
+
+  .canvas-quick-actions,
+  .canvas-quick-actions--bottom {
+    display: contents;
+  }
+
+  #btn-quick-add-text { order: 1; }
+  #btn-quick-templates { order: 2; }
+  #btn-quick-create-sticker { order: 3; }
+  #btn-quick-export { order: 4; }
+
+  .canvas-toolbar {
+    order: 5;
+    flex: 1 1 100%;
+    padding: 0 0 4px 0;
+    font-size: 15px;
+  }
+
+  .canvas-wrapper {
+    order: 6;
+    flex: 1 1 100%;
+  }
+
+  .primary-btn--quick,
+  .primary-btn--export-quick {
+    flex: 1 1 calc(50% - 4px);
+    font-size: 13px;
+    font-family: inherit;
+    letter-spacing: normal;
+    padding: 0 10px;
+    min-height: 44px;
+    border-radius: 10px;
+  }
+
   /* El lienzo no necesita ocupar casi toda la altura de la pantalla
-     de entrada -así se alcanzan a ver los botones rápidos de arriba y
-     abajo sin tener que desplazarse primero-. */
-  .canvas-stage { max-height: 55vh; }
-  #meme-canvas { max-height: 50vh; }
+     de entrada -con los botones ya achicados y agrupados arriba, así
+     se lo ve completo sin tener que desplazarse primero-. */
+  .canvas-stage { max-height: 62vh; }
+  #meme-canvas { max-height: 58vh; }
 
   .templates-overlay-header { padding: 12px 14px; }
   .templates-overlay-body { padding: 14px; }
