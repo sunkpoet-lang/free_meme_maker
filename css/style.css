@@ -173,6 +173,14 @@ button { font-family: inherit; }
   padding: 6px;
 }
 
+/* Como .theme-switcher define "display: flex" sin condición, hacía
+   falta esta regla más específica para que el atributo "hidden"
+   realmente la oculte (el interruptor de sonidos de Windows 95, por
+   ejemplo, se veía vacío en el header aunque tuviera "hidden" puesto,
+   por no tener esta excepción -mismo problema que se resolvió para
+   #btn-install-pwa-). */
+.theme-switcher[hidden] { display: none; }
+
 .theme-btn {
   width: 34px;
   height: 34px;
@@ -196,6 +204,37 @@ button { font-family: inherit; }
   border-color: var(--accent);
   background: var(--accent-soft);
 }
+
+/* Botón "Instalar app" (ver js/pwa.js): a diferencia de los botones de
+   tema, lleva texto, así que no puede ser un cuadradito de 34px. Se
+   queda oculto -atributo "hidden"- hasta que el navegador realmente
+   ofrece instalar la PWA. */
+/* Se pisa a propósito con el selector de id (más específico que la
+   clase .theme-btn de arriba, y que la regla de tamaño táctil de la
+   media query de celular más abajo): este botón lleva texto, así que
+   nunca debe quedar apretado a 34px/40px cuadrados. */
+#btn-install-pwa.btn-install-pwa {
+  width: auto;
+  height: 38px;
+  padding: 0 14px;
+  gap: 6px;
+  font-size: 13px;
+  font-weight: 700;
+  white-space: nowrap;
+  opacity: 1;
+  border: 2px solid var(--accent);
+  border-radius: 12px;
+  background: var(--accent-soft);
+  color: var(--text-primary);
+}
+
+.btn-install-pwa:hover { background: var(--accent); color: var(--accent-ink); }
+
+/* Como .theme-btn ya define "display: flex" sin condición, hace falta
+   esta regla más específica para que el atributo "hidden" realmente
+   la oculte (mismo patrón que .templates-overlay[hidden] etc. más
+   abajo en este archivo). */
+.btn-install-pwa[hidden] { display: none; }
 
 .app-toolbar {
   display: flex;
@@ -469,6 +508,13 @@ button { font-family: inherit; }
   color: var(--text-secondary);
   margin-bottom: 10px;
 }
+
+/* Igual que con .theme-switcher/.btn-install-pwa más arriba:
+   ".field-row" define "display: flex" sin condición, así que sin esta
+   regla el atributo "hidden" no alcanza para ocultar filas como
+   "#custom-size-row" (el ancho/alto personalizado, que debería verse
+   solo al elegir "Personalizado…" en el tamaño del lienzo). */
+.field-row[hidden] { display: none; }
 
 .field-row textarea { resize: vertical; }
 .field-row input[type="range"] { width: 100%; accent-color: var(--accent); }
@@ -1187,6 +1233,14 @@ button { font-family: inherit; }
   display: none;
 }
 
+/* Barra de pestañas (Lienzo / Herramientas / Ajustes): solo existe en
+   celular (ver la media query más abajo y js/mobile-nav.js). En
+   escritorio ni se agrega el atributo "data-mobile-tab", así que esta
+   regla es puro seguro para que nunca aparezca ahí. */
+.mobile-tabbar {
+  display: none;
+}
+
 .template-gif-badge {
   position: absolute;
   top: 4px;
@@ -1205,49 +1259,64 @@ button { font-family: inherit; }
 @media (max-width: 960px) {
   /* En escritorio la app ocupa exactamente la pantalla y cada columna
      (herramientas / lienzo / capas) se desplaza por su cuenta, dentro
-     de su propia cajita. En el celular eso se sentía "encimado": la
-     barra de "ir a sección" (que se pega arriba usando un truco de
-     posición negativa) quedaba recortada por la esquina redondeada de
-     una cajita de apenas 260px de alto, y había que adivinar cuál de
-     varias cajitas chiquitas arrastrar con el dedo. Acá se convierte
-     todo en una página normal que se desplaza de un solo tirón, como
-     cualquier sitio -mucho más fácil de recorrer con el dedo-. */
+     de su propia cajita. En celular usamos una idea parecida pero
+     pensada para el dedo: se ve UN panel a la vez (Lienzo /
+     Herramientas / Ajustes, ver la barra de pestañas más abajo) y
+     ESE panel es el que se desplaza dentro de un espacio con altura
+     fija (pantalla completa menos encabezado y barra de pestañas).
+     Importante: la barra de pestañas NO queda "flotando encima" del
+     contenido (eso tapaba el lienzo y bloqueaba los toques sobre la
+     parte de abajo) -es un bloque más, siempre debajo del panel
+     activo, nunca superpuesto-. */
   html, body {
-    height: auto;
-    min-height: 100%;
+    height: 100vh;
+    height: 100dvh;
+    overflow: hidden;
+  }
+
+  body {
+    display: flex;
+    flex-direction: column;
+  }
+
+  .app-header {
+    flex: 0 0 auto;
   }
 
   .app-layout {
     grid-template-columns: 1fr;
     grid-auto-rows: auto;
+    flex: 1 1 auto;
+    min-height: 0; /* deja que el panel activo, adentro, sea el que se desplace */
     height: auto;
+    overflow: hidden;
   }
 
   /* Primero el LIENZO (con sus botones rápidos de "Agregar texto",
      "Explorar plantillas", "Crear sticker" arriba, y "Descargar meme"
      abajo): así, apenas se abre la página en el celular, ya se ve que
-     cargó y está lista para usarse, sin tener que bajar toda la lista
-     de herramientas primero. Después la caja de herramientas, y al
-     final capas/propiedades/exportar (solo hacen falta una vez ya hay
-     algo en el lienzo). El orden en el HTML no cambia -esto es nada
-     más el orden en el que se VEN-. */
+     cargó y está lista para usarse. El orden en el HTML no cambia
+     -esto es nada más el orden en el que se VEN-. */
   .canvas-area { order: 1; }
   .panel-left { order: 2; }
   .panel-right { order: 3; }
 
-  /* Cada panel deja de tener su propio scroll interno recortado por
-     esquinas redondeadas: ahora crece lo que haga falta y es la
-     PÁGINA la que se desplaza. */
+  /* El panel visible (uno solo a la vez, ver la barra de pestañas más
+     abajo) ocupa toda la altura disponible y se desplaza POR SU
+     CUENTA -ya no es la página entera la que se mueve-. */
+  .canvas-area,
   .panel-left,
   .panel-right {
+    height: 100%;
     max-height: none;
-    overflow: visible;
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
   }
 
   /* La barra de "ir a sección" ya no necesita el truco de offset
-     negativo (que era, justo, lo que se recortaba) porque ya no vive
-     dentro de una cajita con scroll propio: ahora se pega arriba de
-     la PANTALLA mientras se recorre el panel de herramientas. */
+     negativo (que era, justo, lo que se recortaba en el diseño
+     viejo): ahora se pega arriba mientras se recorre el panel de
+     herramientas, que es su propio contenedor con scroll. */
   .panel-quicknav {
     top: 0;
     margin: 0 0 14px 0;
@@ -1269,5 +1338,120 @@ button { font-family: inherit; }
   .templates-overlay-grid {
     grid-template-columns: repeat(auto-fill, minmax(110px, 1fr));
     gap: 10px;
+  }
+
+  /* ---------- Barra de pestañas: Lienzo / Herramientas / Ajustes ----------
+     Antes, en celular, TODO se apilaba en una sola página kilométrica
+     (lienzo, luego las 6 secciones de herramientas, luego capas y
+     propiedades): para llegar a "Propiedades" había que bajar muchísimo.
+     Ahora se muestra un solo panel a la vez -como una app de verdad, no
+     como una página web larga- y esta barra de abajo cambia entre
+     ellos. js/mobile-nav.js pone el atributo "data-mobile-tab" en
+     .app-layout con la pestaña activa; estas reglas muestran/ocultan
+     cada columna según ese atributo.
+
+     A propósito NO es "position: fixed": un bloque fijo encima del
+     contenido termina tapando la parte de abajo de lo que sea que se
+     esté desplazando debajo -y esa parte tapada deja de recibir
+     toques, aunque se vea "casi" visible-. Al ser un bloque más
+     dentro del mismo <body> en columna (ver arriba), siempre queda
+     DEBAJO del panel activo, nunca encima. */
+  .mobile-tabbar {
+    display: flex;
+    flex: 0 0 auto;
+    background: var(--bg-panel);
+    border-top: 2px solid var(--border-color);
+    padding: 6px 6px calc(6px + env(safe-area-inset-bottom, 0px));
+  }
+
+  .mobile-tab-btn {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 2px;
+    padding: 7px 4px;
+    background: transparent;
+    border: none;
+    border-radius: 10px;
+    color: var(--text-secondary);
+    font-family: inherit;
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  .mobile-tab-icon { font-size: 20px; line-height: 1; }
+  .mobile-tab-label { font-size: 10px; font-weight: 700; letter-spacing: 0.2px; }
+
+  .mobile-tab-btn--active {
+    color: var(--accent);
+    background: var(--accent-soft);
+  }
+
+  /* Antes de que cargue js/mobile-nav.js (o si algo falla) todavía no
+     existe el atributo "data-mobile-tab": se ve solo el lienzo, para
+     que no haya un parpadeo mostrando las tres columnas apiladas. */
+  .app-layout:not([data-mobile-tab]) .panel-left,
+  .app-layout:not([data-mobile-tab]) .panel-right,
+  .app-layout[data-mobile-tab="lienzo"] .panel-left,
+  .app-layout[data-mobile-tab="lienzo"] .panel-right {
+    display: none;
+  }
+
+  .app-layout[data-mobile-tab="herramientas"] .canvas-area,
+  .app-layout[data-mobile-tab="herramientas"] .panel-right {
+    display: none;
+  }
+
+  .app-layout[data-mobile-tab="ajustes"] .canvas-area,
+  .app-layout[data-mobile-tab="ajustes"] .panel-left {
+    display: none;
+  }
+
+  /* ---------- Detalles para que se sienta "de celular" y no una web
+     encogida: nada de zoom sorpresa al tocar un campo, botones cómodos
+     de tocar con el dedo, y respeto por el "notch"/barra de gestos. ---------- */
+
+  /* Si un campo de texto tiene menos de 16px, Safari/Chrome en iOS
+     hacen zoom automático al tocarlo (para poder "leer" el texto) y
+     después hay que hacer zoom manual para volver atrás. Con 16px
+     nunca se dispara ese zoom. */
+  .gif-url-row input[type="text"],
+  .field-row input[type="text"],
+  .field-row input[type="number"],
+  .field-row select,
+  .field-row textarea,
+  #templates-search,
+  #custom-width,
+  #custom-height {
+    font-size: 16px;
+  }
+
+  /* Objetivos táctiles de al menos ~44px de alto (guía de Apple/Google),
+     y sin el resaltado gris feo ni el doble-tap-para-zoom de algunos
+     Android al tocar botones seguidos. */
+  button,
+  select,
+  .theme-btn,
+  .mode-btn {
+    touch-action: manipulation;
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  .primary-btn,
+  .secondary-btn,
+  #btn-open-templates,
+  .shape-grid button,
+  .templates-tab-btn,
+  .mode-btn {
+    min-height: 44px;
+  }
+
+  .theme-btn { width: 40px; height: 40px; }
+
+  /* Respeta la muesca/notch de arriba cuando la app corre instalada
+     (PWA) en pantalla completa. */
+  .app-header {
+    padding-top: calc(12px + env(safe-area-inset-top, 0px));
   }
 }

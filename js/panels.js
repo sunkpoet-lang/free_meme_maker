@@ -1047,20 +1047,32 @@ const Panels = {
     const target = document.getElementById("section-propiedades");
     if (!target) return;
 
+    // En celular, "Propiedades" vive dentro de la pestaña "Ajustes" (ver
+    // js/mobile-nav.js): hay que cambiar de pestaña ANTES de revisar si
+    // hace falta desplazarse. En escritorio esto no hace nada y siempre
+    // devuelve false (ahí las tres columnas ya están a la vista).
+    const switchedTab = window.MobileNav ? MobileNav.goToPropertiesTab() : false;
+
     // No hace falta que la sección entera quepa en la pantalla -en
-    // celulares angostos "Propiedades" suele ser más alta que el
-    // viewport-: alcanza con que su encabezado ya sea visible, para
-    // que quede claro dónde escribir. Si el encabezado está arriba
-    // (ya lo pasamos de largo) o abajo (todavía no llegamos) de la
-    // pantalla, ahí sí hace falta desplazar la vista.
+    // celulares angostos "Propiedades" puede ser más alta que su
+    // pestaña-: alcanza con que su encabezado ya sea visible, para que
+    // quede claro dónde escribir. Si el encabezado está arriba (ya lo
+    // pasamos de largo) o abajo (todavía no llegamos), hace falta
+    // desplazar la vista.
     const rect = target.getBoundingClientRect();
     const headerVisible = rect.top >= 0 && rect.top < window.innerHeight;
-    if (headerVisible) return;
 
-    target.scrollIntoView({ behavior: "smooth", block: "start" });
+    if (!headerVisible) {
+      target.scrollIntoView({ behavior: "smooth", block: "start" });
+    } else if (!switchedTab) {
+      // Ya se veía y no hubo que cambiar de pestaña para llegar: no
+      // hace falta resaltar nada, sería un parpadeo sin motivo.
+      return;
+    }
 
     // Mismo resalte breve que ya usa la barra de "ir a sección", para
-    // que sea obvio que ahí es donde hay que escribir.
+    // que sea obvio que ahí es donde hay que escribir -incluso si
+    // cambiar de pestaña ya lo dejó a la vista sin necesitar scroll-.
     target.classList.remove("tool-section--highlight");
     void target.offsetWidth;
     target.classList.add("tool-section--highlight");

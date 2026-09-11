@@ -6,6 +6,18 @@
   <title>Free Meme Maker — Editor de memes gratis</title>
   <meta name="description" content="Crea memes gratis en el navegador. Sube una imagen, agrega texto, stickers y plantillas. Sin marca de agua." />
   <link rel="icon" href="assets/logo.png" type="image/png" />
+
+  <!-- App instalable (PWA): permite "Agregar a pantalla de inicio" en el
+       celular, con ícono propio y sin la barra del navegador. Ver
+       manifest.json y js/pwa.js (registra sw.js). -->
+  <link rel="manifest" href="manifest.json" />
+  <meta name="theme-color" content="#140606" />
+  <link rel="apple-touch-icon" href="assets/icon-192.png" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <meta name="apple-mobile-web-app-title" content="Meme Studio" />
+  <meta name="mobile-web-app-capable" content="yes" />
+
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link
@@ -53,6 +65,10 @@
     <div class="theme-switcher" id="win95-sound-switcher" hidden>
       <button type="button" id="btn-win95-sound-toggle" class="theme-btn theme-btn--active" title="Sonidos activados (clic para silenciar)" aria-label="Silenciar o activar los sonidos de Windows 95">🔊</button>
     </div>
+    <!-- Aparece solo cuando el navegador ofrece instalar la app (o en
+         Safari de iPhone/iPad, donde se explica el paso manual). Ver
+         js/pwa.js. -->
+    <button type="button" id="btn-install-pwa" class="theme-btn btn-install-pwa" hidden title="Instalar Meme Studio como app">📲 Instalar app</button>
     <div class="app-toolbar">
       <button type="button" id="btn-undo" title="Deshacer (Ctrl+Z)">↩ Deshacer</button>
       <button type="button" id="btn-redo" title="Rehacer (Ctrl+Shift+Z)">↪ Rehacer</button>
@@ -236,6 +252,24 @@
 
   </div>
 
+  <!-- Barra de pestañas para celular: solo se ve en pantallas chicas
+       (ver css/style.css) y cambia cuál de las tres columnas de arriba
+       se muestra. Ver js/mobile-nav.js. -->
+  <nav class="mobile-tabbar" id="mobile-tabbar" aria-label="Navegación">
+    <button type="button" class="mobile-tab-btn mobile-tab-btn--active" data-tab="lienzo">
+      <span class="mobile-tab-icon" aria-hidden="true">🖼️</span>
+      <span class="mobile-tab-label">Lienzo</span>
+    </button>
+    <button type="button" class="mobile-tab-btn" data-tab="herramientas">
+      <span class="mobile-tab-icon" aria-hidden="true">🧰</span>
+      <span class="mobile-tab-label">Herramientas</span>
+    </button>
+    <button type="button" class="mobile-tab-btn" data-tab="ajustes">
+      <span class="mobile-tab-icon" aria-hidden="true">⚙️</span>
+      <span class="mobile-tab-label">Ajustes</span>
+    </button>
+  </nav>
+
   <!-- Ventana grande de plantillas (aprovecha todo el ancho de la pantalla) -->
   <div class="templates-overlay" id="templates-overlay" hidden>
     <div class="templates-overlay-header">
@@ -311,10 +345,12 @@
   <script src="js/render.js"></script>
   <script src="js/interactions.js"></script>
   <script src="js/sticker-editor.js"></script>
+  <script src="js/mobile-nav.js"></script>
   <script src="js/panels.js"></script>
   <script src="js/export.js"></script>
   <script src="js/win95-sounds.js"></script>
   <script src="js/win95-dos.js"></script>
+  <script src="js/pwa.js"></script>
   <script src="js/app.js"></script>
   <script>
     (function () {

@@ -17,6 +17,7 @@ document.addEventListener("DOMContentLoaded", () => {
   Render.draw();
   History.commit(); // primer snapshot: lienzo vacío (para poder deshacer hasta aquí)
 
+  MobileNav.setup();
   Interactions.setup();
   Panels.setup();
   Exporter.setup();
