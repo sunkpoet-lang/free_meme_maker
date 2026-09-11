@@ -1007,10 +1007,12 @@ const Panels = {
           return;
         }
 
+        const isNewSelection = App.selectedId !== id;
         App.selectedId = id;
         Render.draw();
         Panels.refreshLayers();
         Panels.refreshProperties();
+        if (isNewSelection) Panels.scrollToPropertiesIfNeeded();
       });
     }
   },
@@ -1027,6 +1029,42 @@ const Panels = {
     }
 
     container.innerHTML = Panels.buildPropertiesHTML(el);
+  },
+
+  /**
+   * Al tocar un texto/imagen/forma en el lienzo (o elegirlo en
+   * "Capas"), hay que poder editarlo enseguida -sobre todo el
+   * "Contenido" del texto, que es la única forma de cambiar lo que
+   * dice el meme (el lienzo es un <canvas>, no se puede escribir
+   * directo encima). En el celular la sección "Propiedades" queda
+   * varias pantallas más abajo (después del lienzo y de toda la caja
+   * de herramientas), así que sin esto parece que "no se puede
+   * editar" cuando en realidad solo hay que bajar mucho para
+   * encontrarla. Esto lleva la vista hasta ahí sola -en escritorio no
+   * hace nada si ya se ve, así que no molesta a quien usa mouse-.
+   */
+  scrollToPropertiesIfNeeded() {
+    const target = document.getElementById("section-propiedades");
+    if (!target) return;
+
+    // No hace falta que la sección entera quepa en la pantalla -en
+    // celulares angostos "Propiedades" suele ser más alta que el
+    // viewport-: alcanza con que su encabezado ya sea visible, para
+    // que quede claro dónde escribir. Si el encabezado está arriba
+    // (ya lo pasamos de largo) o abajo (todavía no llegamos) de la
+    // pantalla, ahí sí hace falta desplazar la vista.
+    const rect = target.getBoundingClientRect();
+    const headerVisible = rect.top >= 0 && rect.top < window.innerHeight;
+    if (headerVisible) return;
+
+    target.scrollIntoView({ behavior: "smooth", block: "start" });
+
+    // Mismo resalte breve que ya usa la barra de "ir a sección", para
+    // que sea obvio que ahí es donde hay que escribir.
+    target.classList.remove("tool-section--highlight");
+    void target.offsetWidth;
+    target.classList.add("tool-section--highlight");
+    setTimeout(() => target.classList.remove("tool-section--highlight"), 1100);
   },
 
   buildPropertiesHTML(el) {

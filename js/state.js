@@ -36,6 +36,10 @@ const App = {
     // Interactions.computeSnap en interactions.js y
     // Render.drawAlignmentGuides en render.js). null = sin guía en ese eje.
     guides: { x: null, y: null },
+    // true si, al soltar, hay que llevar la vista hasta "Propiedades"
+    // porque se acaba de elegir un elemento distinto (ver
+    // Interactions.onPointerDown/onPointerUp y Panels.scrollToPropertiesIfNeeded).
+    pendingScrollToProperties: false,
   },
 };
 

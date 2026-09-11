@@ -53,6 +53,11 @@ const Interactions = {
 
     const hit = Elements.hitTest(x, y);
     if (hit) {
+      // Se guarda para recién al SOLTAR (ver onPointerUp) llevar la
+      // vista hasta "Propiedades" -si se hiciera acá, al tocar, la
+      // página se movería de golpe con el dedo todavía abajo, justo
+      // interrumpiendo el arrastre que muchas veces sigue después-.
+      App.dragState.pendingScrollToProperties = App.selectedId !== hit.id;
       App.selectedId = hit.id;
       App.dragState.mode = "move";
       App.dragState.pointerStart = { x, y };
@@ -60,6 +65,7 @@ const Interactions = {
     } else {
       App.selectedId = null;
       App.dragState.mode = null;
+      App.dragState.pendingScrollToProperties = false;
     }
 
     Render.draw();
@@ -113,6 +119,13 @@ const Interactions = {
       Render.draw();
       History.commit();
       Panels.refreshProperties();
+    }
+
+    // Recién ahora -con el dedo ya levantado, se haya arrastrado o no-
+    // se lleva la vista hasta "Propiedades" si hace falta.
+    if (App.dragState.pendingScrollToProperties) {
+      App.dragState.pendingScrollToProperties = false;
+      Panels.scrollToPropertiesIfNeeded();
     }
   },
 
